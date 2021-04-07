@@ -1,0 +1,25 @@
+- caricamento dataset (quale dei 3?)
+- pre-processing 
+  - feature extraction (min, max, avg, std in time window -> simile a binning)
+  - valori mancanti
+  - bilanciamento
+  - discrepanze
+  - standardizzazione/min-max scaling
+  - pca/lda? 
+
+- divisione train/val/test
+  - cross-validation o hold-out validation?
+  - random search o grid search?
+  - mlp
+    - architettura 
+    - ottimizzatore
+    - alpha
+    - numero epoche
+  - NB
+  - RF
+    - numero di alberi
+  - SVM
+
+ - testing
+    - matrice di confusione
+    - metriche varie

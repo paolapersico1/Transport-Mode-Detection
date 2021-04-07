@@ -1,0 +1,41 @@
+tm: WALKING, CAR, STILL, TRAIN and BUS
+
+a maximum frequency of 20 Hz
+
+< timestamp, sensori, sensorOutputi >
+
+Result files contained raw data from twenty-three sensors.
+
+6% of data is annotated as walking, 25% as driving a car, 24% as standing still,
+20% as being on a train, and 5% as being on a bus
+
+the time series for each sensor are then split in time windows of a fixed size. For each window, standard and
+robust numerical features are extracted (such as min, max, mean and standard
+deviation) the ML model is trained on the extracted features for each sensor.
+
+The size of the time window depends on the types of actions
+to be recognized, and in this work we set it to 5 seconds, which is a common
+value for similar task also for related works in literature
+
+for each window we end up with a total of Λ · 4 features, where Λ is the total number of sensors
+which reported a value in the given time window. Missing values are then filled
+with average values on the training set for each sensor.
+
+The excluded sensors are: light, pression, magnetic field, gravity and
+proximity.
+
+From the remaining sensors, we have created three evaluation datasets,
+namely D1, D2 and D3. D1 is composed by the accelerometer, gyroscope and sound; D2
+contains all the others but the speed, which is added in D3.
+For each Di, we build four models with four different classification algorithms: Decision Trees (DT), Random Forest (RF), Support Vector Machines
+(SVM), and Neural Network (NN). Since NN and SVM require precise parameters characterization ([10], [5]), we perform a 10-fold cross validation to find
+the best parameters, and select those for the rest of our analysis.
+
+features obtained from the
+accelerometer are by far the most important in recognizing the classes, followed
+by the gyroscope. Features from the sound have instead less importance. 
+the speed is considered important by the model only for motorized classes.
+
+Consequently, a model the aim of which is to figure out if a user is WALKING
+can be easily based on accelerometer and gyroscope. On the other hand, when one of the classes
+to be classified is STILL, also the sound can be helpful.
