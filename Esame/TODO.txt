@@ -2,7 +2,7 @@
 - pre-processing
   - feature extraction (min, max, avg, std in time window -> simile a binning) // gia` fatto
   - valori mancanti				media/moda/mediana e vediamo ~~quale si discosta di piu` dai valori possibili~~ con un classificatore quale si comporta meglio
-  - bilanciamento				no (al massimo facciamo oversampling)
+  - bilanciamento				no IL DATASET E` BILANCIATO (al massimo facciamo oversampling)
   - discrepanze					easy -- le features con discrepanze vengono trattati come valori mancanti (se sono tante)
   - standardizzazione/min-max scaling		a seconda del modello (KNN, SVM, reti neurali => min-max scaling: no assunzioni su distribuzione) (gaussian e NB => standardizzazione (no QDA))
   - pca/lda? 					PCA per tutto tranne random forest, se avanza tempo usiamo LDA
