@@ -1,20 +1,21 @@
-- caricamento dataset (quale dei 3?)
-- pre-processing 
-  - feature extraction (min, max, avg, std in time window -> simile a binning)
-  - valori mancanti
-  - bilanciamento
-  - discrepanze
-  - standardizzazione/min-max scaling
-  - pca/lda? 
+- caricamento dataset (quale dei 3?) balanced, 0.5 o 5 sec (chiediamo a buru, propenso per 5 sec)
+- pre-processing
+  - feature extraction (min, max, avg, std in time window -> simile a binning) // gia` fatto
+  - valori mancanti				media/moda/mediana e vediamo ~~quale si discosta di piu` dai valori possibili~~ con un classificatore quale si comporta meglio
+  - bilanciamento				no (al massimo facciamo oversampling)
+  - discrepanze					easy -- le features con discrepanze vengono trattati come valori mancanti (se sono tante)
+  - standardizzazione/min-max scaling		a seconda del modello (KNN, SVM, reti neurali => min-max scaling: no assunzioni su distribuzione) (gaussian e NB => standardizzazione (no QDA))
+  - pca/lda? 					PCA per tutto tranne random forest, se avanza tempo usiamo LDA
 
 - divisione train/val/test
-  - cross-validation o hold-out validation?
-  - random search o grid search?
+  - cross-validation o hold-out validation?	Cross validation
+  - random search o grid search?		Grid aumentando la granularita` ogni volta, ma se lento andare di random
   - mlp
-    - architettura 
-    - ottimizzatore
-    - alpha
-    - numero epoche
+    - architettura				1 (per la scienza), 2 o 3 hidden layer ---- # hidden units hyperpar
+    - ottimizzatore				sgd, semmai adam (B1 = 0.9, B2 = 0.999)
+    - alpha					learning rate decay (hyperpars) [a=0.1,0.01,0.001]
+    - numero epoche				hyperpar []
+    - dimensione minibatch			hyperpar [8,16,...,256]
   - NB
   - RF
     - numero di alberi
