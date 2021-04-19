@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sbn
+from sklearn import metrics
+
 
 def plot_class_distribution(y):
     plt.bar(x=np.unique(y, return_counts=True)[0], height=np.unique(y, return_counts=True)[1])
@@ -36,3 +38,7 @@ def plot_explained_variance(labels, y):
 
 def readable_labels(labels):
     return list(map(lambda x: x.replace('android.sensor.',''), labels))
+
+def plot_roc(model, X_test, y_test):
+    metrics.plot_roc_curve(model, X_test, y_test)
+    plt.show()
