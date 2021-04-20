@@ -1,29 +1,20 @@
-import pandas as pd
+import os
+import os.path as path
 import numpy as np
 from sklearn.impute import SimpleImputer
 from sklearn.naive_bayes import GaussianNB
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-import time
-
+from joblib import dump, load
+from sklearn.discriminant_analysis import  QuadraticDiscriminantAnalysis
 import data_layer
-from data_layer import loadData
+import model_runner
 import visualization
-from sklearn.model_selection import train_test_split, KFold
+from data_layer import loadData
 from sklearn.decomposition import PCA
-from sklearn.model_selection import GridSearchCV
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-# import seaborn as sb
-# import matplotlib.pyplot as plt
 import torch
-# from sklearn.metrics import confusion_matrix
-# from sklearn.naive_bayes import GaussianNB
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn import metrics
-# from sklearn.impute import SimpleImputer
 from sklearn.svm import SVC
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import train_test_split
 
 if __name__ == '__main__':
     torch.manual_seed(0)
@@ -32,10 +23,9 @@ if __name__ == '__main__':
     # true aumenta le performance ma lo rende non-deterministico
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+    models_dir = 'saved_models'
 
     X, y, num_classes = loadData()
-
-    #X, _ = data_layer.preprocess(X, X)
 
     unused_features = ["android.sensor.light#mean","android.sensor.light#min","android.sensor.light#max","android.sensor.light#std",
                         "android.sensor.gravity#mean","android.sensor.gravity#min","android.sensor.gravity#max","android.sensor.gravity#std",
@@ -43,7 +33,7 @@ if __name__ == '__main__':
                         "android.sensor.magnetic_field_uncalibrated#mean","android.sensor.magnetic_field_uncalibrated#min","android.sensor.magnetic_field_uncalibrated#max","android.sensor.magnetic_field_uncalibrated#std",
                         "android.sensor.pressure#mean","android.sensor.pressure#min","android.sensor.pressure#max","android.sensor.pressure#std",
                         "android.sensor.proximity#mean","android.sensor.proximity#min","android.sensor.proximity#max","android.sensor.proximity#std"]
-    X.drop(unused_features, axis = 1)
+    X.drop(unused_features, axis=1)
 
     stdScaler = StandardScaler()
     smpImputer = SimpleImputer(strategy="median")
@@ -62,44 +52,63 @@ if __name__ == '__main__':
 
     X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
 
+    X_trainval, imputer = data_layer.preprocess(X_trainval)
+    # X_trainval, imputer = data_layer.preprocess(X_trainval, MinMaxScaler())
 
-    # param_grid = {'C': [0.001, 0.01, 0.1, 1, 10, 100],
-    #               'gamma': [0.001, 0.01, 0.1, 1, 10, 100]}
-    param_grid = [
-        {
-            'clf': (SVC(),),
-            'clf__kernel': ('linear', 'poly', 'rbf'),
-            'clf__C': (0.001, 0.01, 0.1, 1, 10),
-            'clf__gamma': (0.001, 0.01, 0.1, 1, 10),
-        },
-        {
-            'clf': (GaussianNB(),)
-        },
-        {
-            'clf': (RandomForestClassifier(random_state=42, n_jobs=-1),),
-            'clf__n_estimators': (10, 20, 50, 100, 200)
-        },
-        {
-            'scaler' : (StandardScaler(), MinMaxScaler())
-        }
+    models = [
+        (
+            "svc_linear",
+            SVC(kernel="linear"),
+            {
+                'clf__C': np.logspace(-3, 1, 5)
+            }
+        ),
+        (
+            "svc_poly",
+            SVC(kernel="poly"),
+            {
+                'clf__C': np.logspace(-3, 1, 5),
+                'clf__degree': range(2, 6)
+            }
+        ),
+        (
+            "svc_rbf",
+            SVC(kernel="rbf"),
+            {
+                'clf__C': np.logspace(-3, 1, 5),
+                'clf__gamma': np.logspace(-3, 1, 5)
+            }
+        ),
+        (
+            "gaussian",
+            GaussianNB(),
+            {}
+        ),
+        (
+            "qda",
+            QuadraticDiscriminantAnalysis(),
+            {}
+        ),
+        (
+            "random_forest",
+            RandomForestClassifier(random_state=42, n_jobs=4),
+            {
+                'clf__n_estimators': [10, 20, 50, 100, 200, 300]
+            }
+        )
     ]
+    best_estimators = {}
+    for est_name, est, params in models:
+        if os.path.exists(path.join(models_dir, est_name + ".joblib")):
+            print("Saved model found: {}".format(est_name))
+            best_estimators[est_name] = load(path.join(models_dir, est_name + ".joblib"))
+        else:
+            best_estimators[est_name] = model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)
+            dump(best_estimators[est_name], path.join(models_dir, est_name + ".joblib"))
+        print("Test set accuracy: {:.2f}".format(best_estimators[est_name].score(X_trainval, y_trainval)))
+        visualization.plot_confusion(best_estimators[est_name], X_trainval, y_trainval, est_name)
 
-    pipeline = Pipeline([('fillnan', SimpleImputer(strategy="median")),
-                         ('scaler', StandardScaler()),
-                         ('clf', RandomForestClassifier(random_state=42))])
-    grid_search = GridSearchCV(pipeline, param_grid, cv=10, verbose=10)
-    time0 = time.time()
-    grid_search.fit(X_trainval, y_trainval)
-
-
-    results = pd.DataFrame(grid_search.cv_results_)
-    results['param_clf'] = results["param_clf"].apply(lambda x: str(type(x)))
-    pd.set_option("display.max_colwidth", None)
-    print(results.iloc[results.groupby('param_clf')['mean_test_score'].idxmax()]["params"])
-    # print(results[results[''], :])
-
-    print(time.time() - time0)
-
+    print(best_estimators)
     # kf = KFold(n_splits=10)
     # for train_index, val_index in kf.split(X_trainval):
     #     X_train, X_val, y_train, y_val = X_trainval.iloc[train_index], X_trainval.iloc[val_index],\

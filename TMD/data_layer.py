@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset
 import torch
 from sklearn.impute import SimpleImputer
@@ -28,28 +30,13 @@ def loadData():
 
     return X, y, num_classes
 
-def preprocess(X_train, X_val, method="std"):
-    X_train_mean = np.mean(X_train, axis=0)
-    X_train_std = np.std(X_train, axis=0)
-    X_train_median = np.median(X_train, axis=0)
+def preprocess(X_trainval):
+    imputer = SimpleImputer(strategy="median").fit(X_trainval)
+    X_trainval = imputer.transform(X_trainval)
+    # preprocess_pipeline = Pipeline([('fillnan', SimpleImputer(strategy="median")),
+    #                                 ('scaler', StandardScaler())])
 
-    X_train = X_train.fillna(X_train_median)
-    X_val = X_val.fillna(X_train_median)
-
-
-    if method == "std":
-        X_train = (X_train - X_train_mean) / X_train_std
-        X_val = (X_val - X_train_mean) / X_train_std
-    elif method == "scaling":
-        X_train_min = np.min(X_train, axis=0)
-        X_train_max = np.max(X_train, axis=0)
-        X_train_range = X_train_max - X_train_min
-        X_train = (X_train - X_train_min) / X_train_range
-        X_val = (X_train - X_train_min) / X_train_range
-    else:
-        raise ValueError("Method not supported")
-
-    return X_train, X_val
+    return X_trainval, imputer
 
 
 

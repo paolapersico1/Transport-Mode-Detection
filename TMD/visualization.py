@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sbn
 from sklearn import metrics
+from sklearn.metrics import plot_confusion_matrix
 
 
 def plot_class_distribution(y):
@@ -41,4 +42,9 @@ def readable_labels(labels):
 
 def plot_roc(model, X_test, y_test):
     metrics.plot_roc_curve(model, X_test, y_test)
+    plt.show()
+
+def plot_confusion(model, X, y, title):
+    plot_confusion_matrix(model, X, y)
+    plt.title(title)
     plt.show()
