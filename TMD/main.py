@@ -15,6 +15,12 @@ from sklearn.decomposition import PCA
 import torch
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
+from tabulate import tabulate
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import torch
+from sklearn.impute import SimpleImputer
 
 if __name__ == '__main__':
     torch.manual_seed(0)
@@ -27,13 +33,9 @@ if __name__ == '__main__':
 
     X, y, num_classes = loadData()
 
-    unused_features = ["android.sensor.light#mean","android.sensor.light#min","android.sensor.light#max","android.sensor.light#std",
-                        "android.sensor.gravity#mean","android.sensor.gravity#min","android.sensor.gravity#max","android.sensor.gravity#std",
-                        "android.sensor.magnetic_field#mean","android.sensor.magnetic_field#min","android.sensor.magnetic_field#max","android.sensor.magnetic_field#std",
-                        "android.sensor.magnetic_field_uncalibrated#mean","android.sensor.magnetic_field_uncalibrated#min","android.sensor.magnetic_field_uncalibrated#max","android.sensor.magnetic_field_uncalibrated#std",
-                        "android.sensor.pressure#mean","android.sensor.pressure#min","android.sensor.pressure#max","android.sensor.pressure#std",
-                        "android.sensor.proximity#mean","android.sensor.proximity#min","android.sensor.proximity#max","android.sensor.proximity#std"]
-    X.drop(unused_features, axis=1)
+    removable_sensors = ["light", "gravity", "magnetic", "pressure", "proximity"]
+    selected_features = [col for col in X.columns if all(sensor not in col for sensor in removable_sensors)]
+    selected_cols = X.columns.get_indexer(selected_features)
 
     stdScaler = StandardScaler()
     smpImputer = SimpleImputer(strategy="median")
@@ -53,7 +55,6 @@ if __name__ == '__main__':
     X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
 
     X_trainval, imputer = data_layer.preprocess(X_trainval)
-    # X_trainval, imputer = data_layer.preprocess(X_trainval, MinMaxScaler())
 
     models = [
         (
@@ -97,18 +98,20 @@ if __name__ == '__main__':
             }
         )
     ]
-    best_estimators = {}
+    best_models = {}
     for est_name, est, params in models:
         if os.path.exists(path.join(models_dir, est_name + ".joblib")):
             print("Saved model found: {}".format(est_name))
-            best_estimators[est_name] = load(path.join(models_dir, est_name + ".joblib"))
+            best_models[est_name] = {'model': load(path.join(models_dir, est_name + ".joblib"))}
         else:
-            best_estimators[est_name] = model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)
-            dump(best_estimators[est_name], path.join(models_dir, est_name + ".joblib"))
-        print("Test set accuracy: {:.2f}".format(best_estimators[est_name].score(X_trainval, y_trainval)))
-        visualization.plot_confusion(best_estimators[est_name], X_trainval, y_trainval, est_name)
+            best_models[est_name] = {'model': model_runner.run_trainval(X_trainval, y_trainval, est, params, selected_cols, cv=10)}
+            dump(best_models[est_name]['model'], path.join(models_dir, est_name + ".joblib"))
 
-    print(best_estimators)
+        best_models[est_name]["accuracy"] = best_models[est_name]['model'].score(X_trainval, y_trainval)
+        # visualization.plot_confusion(best_models[est_name]['model'], X_trainval, y_trainval, est_name)
+
+    visualization.show_best_cv_models(best_models)
+
     # kf = KFold(n_splits=10)
     # for train_index, val_index in kf.split(X_trainval):
     #     X_train, X_val, y_train, y_val = X_trainval.iloc[train_index], X_trainval.iloc[val_index],\

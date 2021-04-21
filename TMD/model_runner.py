@@ -2,11 +2,16 @@ from sklearn.model_selection import GridSearchCV
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import FunctionTransformer
+
+import data_layer
 
 
-def run_trainval(X_trainval, y_trainval, clf, params, cv=5, verbose=True):
+def run_trainval(X_trainval, y_trainval, clf, params, selected_cols, cv=5, verbose=True):
     params["scaler"] = [StandardScaler(), MinMaxScaler()]
-    pipeline = Pipeline([('scaler', StandardScaler()), ('clf', clf)])
+    params["feature_selection"] = [data_layer.FeatureSelection(),
+                                   data_layer.FeatureSelection(selected_cols)]
+    pipeline = Pipeline([('feature_selection', data_layer.FeatureSelection([])), ('scaler', StandardScaler()), ('clf', clf)])
 
     try:
         grid_search = GridSearchCV(pipeline, params, cv=cv, verbose=10 if verbose else 0, n_jobs=8)

@@ -37,7 +37,6 @@ per training
 	affinare iperparametri J
 	migliorare stampa iperparametri best model P
 	bar plot accuratezza per ogni best model J
-	stampa decision boundary P
 per testing
 	bar plot accuratezza per ogni best model J
 	roc curve di ogni best model  J
