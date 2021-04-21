@@ -98,17 +98,36 @@ if __name__ == '__main__':
             }
         )
     ]
+
     best_models = {}
     for est_name, est, params in models:
-        if os.path.exists(path.join(models_dir, est_name + ".joblib")):
-            print("Saved model found: {}".format(est_name))
-            best_models[est_name] = {'model': load(path.join(models_dir, est_name + ".joblib"))}
-        else:
-            best_models[est_name] = {'model': model_runner.run_trainval(X_trainval, y_trainval, est, params, selected_cols, cv=10)}
-            dump(best_models[est_name]['model'], path.join(models_dir, est_name + ".joblib"))
+            file_name = est_name + ".joblib"
 
-        best_models[est_name]["accuracy"] = best_models[est_name]['model'].score(X_trainval, y_trainval)
-        # visualization.plot_confusion(best_models[est_name]['model'], X_trainval, y_trainval, est_name)
+            if os.path.exists(path.join(models_dir, file_name)):
+                print("Saved model found: {}".format(est_name))
+                best_models[est_name] = {'model': load(path.join(models_dir, file_name))}
+            else:
+                best_models[est_name] = {'model': model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)}
+                dump(best_models[est_name]['model'], path.join(models_dir, file_name))
+
+            best_models[est_name]["accuracy"] = best_models[est_name]['model'].score(X_trainval, y_trainval)
+            visualization.plot_confusion(best_models[est_name]['model'], X_trainval, y_trainval, est_name)
+
+            # ************************************
+            est_name = est_name + "_fs"
+            file_name = est_name + ".joblib"
+            X_trainval_fs = data_layer.FeatureSelection(selected_cols).transform(X_trainval)
+
+            if os.path.exists(path.join(models_dir, file_name)):
+                print("Saved model found: {}".format(est_name))
+                best_models[est_name] = {'model': load(path.join(models_dir, file_name))}
+            else:
+                best_models[est_name] = {'model': model_runner.run_trainval(X_trainval_fs, y_trainval, est, params, cv=10)}
+                dump(best_models[est_name]['model'], path.join(models_dir, file_name))
+
+            best_models[est_name]["accuracy"] = best_models[est_name]['model'].score(X_trainval_fs, y_trainval)
+            visualization.plot_confusion(best_models[est_name]['model'], X_trainval_fs, y_trainval, est_name)
+            # ***********************************
 
     visualization.show_best_cv_models(best_models)
 

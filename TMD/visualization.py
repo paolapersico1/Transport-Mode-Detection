@@ -54,6 +54,7 @@ def show_best_cv_models(best_models):
     print("Best models according to CV:\n")
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)
+
     table = pd.DataFrame({'Model': best_models.keys(),
                           'Pre-processing': [x['model'].named_steps.scaler for x in best_models.values()],
                           'C': [get_hyperparam(x, "C") for x in best_models.values()],
@@ -61,6 +62,8 @@ def show_best_cv_models(best_models):
                           'degree': [get_hyperparam(x, "degree") for x in best_models.values()],
                           'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.values()],
                           'Accuracy': ["{:.2f}".format(x['accuracy']) for x in best_models.values()]})
+    table.set_index('Model', inplace=True,)
+    table.sort_values(by=['Accuracy'], inplace=True, ascending=False)
     print(table)
 
 def get_hyperparam(x, hyperparam):
