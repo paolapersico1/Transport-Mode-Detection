@@ -1,5 +1,7 @@
 import os
 import os.path as path
+import time
+
 import numpy as np
 from sklearn.impute import SimpleImputer
 from sklearn.naive_bayes import GaussianNB
@@ -100,36 +102,24 @@ if __name__ == '__main__':
     ]
 
     best_models = {}
-    for est_name, est, params in models:
+    for fs, X_trainval in [("", X_trainval),
+                           ("_fs", data_layer.FeatureSelection(selected_cols).transform(X_trainval))]:
+        for est_name, est, params in models:
+            est_name = est_name + fs
             file_name = est_name + ".joblib"
 
             if os.path.exists(path.join(models_dir, file_name)):
                 print("Saved model found: {}".format(est_name))
-                best_models[est_name] = {'model': load(path.join(models_dir, file_name))}
+                best_models[est_name] = {'pipeline': load(path.join(models_dir, file_name))}
             else:
-                best_models[est_name] = {'model': model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)}
-                dump(best_models[est_name]['model'], path.join(models_dir, file_name))
+                best_models[est_name] = {'pipeline': model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)}
+                dump(best_models[est_name]['pipeline'], path.join(models_dir, file_name))
 
-            best_models[est_name]["accuracy"] = best_models[est_name]['model'].score(X_trainval, y_trainval)
-            visualization.plot_confusion(best_models[est_name]['model'], X_trainval, y_trainval, est_name)
-
-            # ************************************
-            est_name = est_name + "_fs"
-            file_name = est_name + ".joblib"
-            X_trainval_fs = data_layer.FeatureSelection(selected_cols).transform(X_trainval)
-
-            if os.path.exists(path.join(models_dir, file_name)):
-                print("Saved model found: {}".format(est_name))
-                best_models[est_name] = {'model': load(path.join(models_dir, file_name))}
-            else:
-                best_models[est_name] = {'model': model_runner.run_trainval(X_trainval_fs, y_trainval, est, params, cv=10)}
-                dump(best_models[est_name]['model'], path.join(models_dir, file_name))
-
-            best_models[est_name]["accuracy"] = best_models[est_name]['model'].score(X_trainval_fs, y_trainval)
-            visualization.plot_confusion(best_models[est_name]['model'], X_trainval_fs, y_trainval, est_name)
-            # ***********************************
+            best_models[est_name]["accuracy"] = best_models[est_name]['pipeline'].score(X_trainval, y_trainval)
+            visualization.plot_confusion(best_models[est_name]['pipeline'], X_trainval, y_trainval, est_name)
 
     visualization.show_best_cv_models(best_models)
+    ### here Trainval is with feature selection (40 columns)
 
     # kf = KFold(n_splits=10)
     # for train_index, val_index in kf.split(X_trainval):

@@ -51,12 +51,12 @@ def plot_confusion(model, X, y, title):
     # plt.show()
 
 def show_best_cv_models(best_models):
-    print("Best models according to CV:\n")
+    print("\nBest models according to CV:\n")
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)
 
     table = pd.DataFrame({'Model': best_models.keys(),
-                          'Pre-processing': [x['model'].named_steps.scaler for x in best_models.values()],
+                          'Pre-processing': [x['pipeline'].named_steps.scaler for x in best_models.values()],
                           'C': [get_hyperparam(x, "C") for x in best_models.values()],
                           'gamma': [get_hyperparam(x, "gamma") for x in best_models.values()],
                           'degree': [get_hyperparam(x, "degree") for x in best_models.values()],
@@ -67,7 +67,7 @@ def show_best_cv_models(best_models):
     print(table)
 
 def get_hyperparam(x, hyperparam):
-    model_hyperparams = x['model'].named_steps.clf.get_params()
+    model_hyperparams = x['pipeline'].named_steps.clf.get_params()
     if hyperparam in model_hyperparams.keys():
         result = model_hyperparams[hyperparam]
     else:
