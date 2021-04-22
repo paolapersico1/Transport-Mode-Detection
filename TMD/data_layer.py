@@ -20,7 +20,8 @@ class MyTorchDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx, :], self.y[idx]
 
-def loadData():
+
+def load_data():
     data = pd.read_csv('acquisition/dataset_5secondWindow.csv', index_col=0)
     data = data.iloc[:, 4:-1]
     # print('data shape: {}'.format(data.shape))
@@ -30,6 +31,7 @@ def loadData():
 
     return X, y, num_classes
 
+
 def preprocess(X_trainval):
     imputer = SimpleImputer(strategy="median").fit(X_trainval)
     X_trainval = imputer.transform(X_trainval)
@@ -37,6 +39,3 @@ def preprocess(X_trainval):
     #                                 ('scaler', StandardScaler())])
 
     return X_trainval, imputer
-
-
-

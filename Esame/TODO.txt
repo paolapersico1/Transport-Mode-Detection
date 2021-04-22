@@ -34,12 +34,12 @@ crea estimator custom per drop colonne  P
 
 per training
 	provare senza drop P
-	affinare iperparametri J
+	VV affinare iperparametri J
 	migliorare stampa iperparametri best model P
-	bar plot accuratezza per ogni best model J
+	VV bar plot accuratezza per ogni best model J
 	stampa decision boundary P
 per testing
-	bar plot accuratezza per ogni best model J
-	roc curve di ogni best model  J
-	in plot confusion
-		disporli a griglia J
+	VV bar plot accuratezza per ogni best model J
+	TD roc curve di ogni best model  J
+	VV in plot confusion
+		VV disporli a griglia J
