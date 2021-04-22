@@ -31,16 +31,6 @@ def loadData():
 
     return X, y, num_classes
 
-class FeatureSelection(BaseEstimator, TransformerMixin):
-    def __init__(self, selected_cols=None):
-        self.selected_cols = selected_cols
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X, y=None):
-        return X if (self.selected_cols is None) else X[:, self.selected_cols]
-
 def preprocess(X_trainval):
     imputer = SimpleImputer(strategy="median").fit(X_trainval)
     X_trainval = imputer.transform(X_trainval)

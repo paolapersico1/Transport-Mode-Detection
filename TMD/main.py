@@ -41,7 +41,7 @@ if __name__ == '__main__':
     pca.fit(smpImputer.fit_transform(stdScaler.fit_transform(X)))
     most_important = [np.abs(pca.components_[i]).argmax() for i in range(X.shape[1])]
     most_important_names = [X.columns[most_important[i]] for i in range(X.shape[1])]
-    visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
+    #visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
 
 
     #visualization_priori.plot_class_distribution(y)
@@ -50,66 +50,75 @@ if __name__ == '__main__':
     # for col in X.columns:
     #     visualization.density(X[col])
 
-    X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
 
-    X_trainval, imputer = data_layer.preprocess(X_trainval)
 
-    models = [
-        (
-            "svc_linear",
-            SVC(kernel="linear"),
-            {
-                'clf__C': np.logspace(-3, 1, 5)
-            }
-        ),
-        (
-            "svc_poly",
-            SVC(kernel="poly"),
-            {
-                'clf__C': np.logspace(-3, 1, 5),
-                'clf__degree': range(2, 6)
-            }
-        ),
-        (
-            "svc_rbf",
-            SVC(kernel="rbf"),
-            {
-                'clf__C': np.logspace(-3, 1, 5),
-                'clf__gamma': np.logspace(-3, 1, 5)
-            }
-        ),
-        (
-            "gaussian",
-            GaussianNB(),
-            {}
-        ),
-        (
-            "qda",
-            QuadraticDiscriminantAnalysis(),
-            {}
-        ),
-        (
-            "random_forest",
-            RandomForestClassifier(random_state=42, n_jobs=4),
-            {
-                'clf__n_estimators': [10, 20, 50, 100, 200, 300]
-            }
-        )
-    ]
+    # train with 64,46,40,16 features
+    #dataset with features with less than 30% missing values
+    X_46 = X.dropna(thresh= (0.7 * X.shape[0]), axis=1)  #40 columns
+    print("Features with > 70% missing values:")
+    print(set(X.columns) ^ set(X_46.columns))
+
+
+    #dataset without light, gravity, magnetic, pressure, proximity features
+    removable_sensors = ["light", "gravity", "magnetic", "pressure", "proximity"]
+    removable_features = [col for col in X.columns if any(sensor in col for sensor in removable_sensors)]
+    X_40 = X.drop(removable_features, axis=1)  #40 columns
+
+    #dataset with only gyroscope (calibrated and uncalibrated), accelerometer and sound
+    relevant_sensors = ["gyroscope", "accelerometer", "sound"]
+    removable_features = [col for col in X.columns if all(sensor not in col for sensor in relevant_sensors)]
+    X_16 = X.drop(removable_features, axis=1)  #16 columns
 
     best_models = {}
 
-    # train with 64,40,12 features
-    removable_sensors = ["light", "gravity", "magnetic", "pressure", "proximity"]
-    selected_features = [col for col in X.columns if all(sensor not in col for sensor in removable_sensors)]
-    selected_cols_40 = X.columns.get_indexer(selected_features)  #40 columns
-    relevant_sensors = ["gyroscope", "accelerometer", "sound"]
-    selected_features = [col for col in X.columns if any(sensor in col for sensor in relevant_sensors)]
-    selected_cols_3 = X.columns.get_indexer(selected_features)  #3 columns
+    for fs, X in [("", X), ("_46", X_46), ("_40", X_40), ("_16", X_16)]:
 
-    for fs, X_trainval in [("", X_trainval),
-                           ("_40", data_layer.FeatureSelection(selected_cols_40).transform(X_trainval)),
-                           ("_3", data_layer.FeatureSelection(selected_cols_3).transform(X_trainval))]:
+        X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
+        X_trainval, imputer = data_layer.preprocess(X_trainval)
+
+        models = [
+            (
+                "svc_linear",
+                SVC(kernel="linear"),
+                {
+                    'clf__C': np.logspace(-3, 1, 5)
+                }
+            ),
+            (
+                "svc_poly",
+                SVC(kernel="poly"),
+                {
+                    'clf__C': np.logspace(-3, 1, 5),
+                    'clf__degree': range(2, 6)
+                }
+            ),
+            (
+                "svc_rbf",
+                SVC(kernel="rbf"),
+                {
+                    'clf__C': np.logspace(-3, 1, 5),
+                    'clf__gamma': np.logspace(-3, 1, 5)
+                }
+            ),
+            (
+                "gaussian",
+                GaussianNB(),
+                {}
+            ),
+            (
+                "qda",
+                QuadraticDiscriminantAnalysis(),
+                {}
+            ),
+            (
+                "random_forest",
+                RandomForestClassifier(random_state=42, n_jobs=4),
+                {
+                    'clf__n_estimators': [10, 20, 50, 100, 200, 300]
+                }
+            )
+        ]
+
         for est_name, est, params in models:
             est_name = est_name + fs
             file_name = est_name + ".joblib"
@@ -122,7 +131,7 @@ if __name__ == '__main__':
                 dump(best_models[est_name]['pipeline'], path.join(models_dir, file_name))
 
             best_models[est_name]["accuracy"] = best_models[est_name]['pipeline'].score(X_trainval, y_trainval)
-            visualization.plot_confusion(best_models[est_name]['pipeline'], X_trainval, y_trainval, est_name)
+            #visualization.plot_confusion(best_models[est_name]['pipeline'], X_trainval, y_trainval, est_name)
 
     visualization.show_best_cv_models(best_models)
     ## here Trainval is with last feature selection
