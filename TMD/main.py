@@ -35,17 +35,13 @@ if __name__ == '__main__':
 
     X, y, num_classes = loadData()
 
-    removable_sensors = ["light", "gravity", "magnetic", "pressure", "proximity"]
-    selected_features = [col for col in X.columns if all(sensor not in col for sensor in removable_sensors)]
-    selected_cols = X.columns.get_indexer(selected_features)
-
     stdScaler = StandardScaler()
     smpImputer = SimpleImputer(strategy="median")
     pca = PCA()
     pca.fit(smpImputer.fit_transform(stdScaler.fit_transform(X)))
     most_important = [np.abs(pca.components_[i]).argmax() for i in range(X.shape[1])]
     most_important_names = [X.columns[most_important[i]] for i in range(X.shape[1])]
-    # visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
+    visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
 
 
     #visualization_priori.plot_class_distribution(y)
@@ -102,8 +98,18 @@ if __name__ == '__main__':
     ]
 
     best_models = {}
+
+    # train with 64,40,12 features
+    removable_sensors = ["light", "gravity", "magnetic", "pressure", "proximity"]
+    selected_features = [col for col in X.columns if all(sensor not in col for sensor in removable_sensors)]
+    selected_cols_40 = X.columns.get_indexer(selected_features)  #40 columns
+    relevant_sensors = ["gyroscope", "accelerometer", "sound"]
+    selected_features = [col for col in X.columns if any(sensor in col for sensor in relevant_sensors)]
+    selected_cols_3 = X.columns.get_indexer(selected_features)  #3 columns
+
     for fs, X_trainval in [("", X_trainval),
-                           ("_fs", data_layer.FeatureSelection(selected_cols).transform(X_trainval))]:
+                           ("_40", data_layer.FeatureSelection(selected_cols_40).transform(X_trainval)),
+                           ("_3", data_layer.FeatureSelection(selected_cols_3).transform(X_trainval))]:
         for est_name, est, params in models:
             est_name = est_name + fs
             file_name = est_name + ".joblib"
@@ -119,7 +125,7 @@ if __name__ == '__main__':
             visualization.plot_confusion(best_models[est_name]['pipeline'], X_trainval, y_trainval, est_name)
 
     visualization.show_best_cv_models(best_models)
-    ### here Trainval is with feature selection (40 columns)
+    ## here Trainval is with last feature selection
 
     # kf = KFold(n_splits=10)
     # for train_index, val_index in kf.split(X_trainval):

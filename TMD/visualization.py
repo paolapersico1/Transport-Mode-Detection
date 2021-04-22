@@ -48,7 +48,7 @@ def plot_roc(model, X_test, y_test):
 def plot_confusion(model, X, y, title):
     plot_confusion_matrix(model, X, y)
     plt.title(title)
-    # plt.show()
+    plt.show()
 
 def show_best_cv_models(best_models):
     print("\nBest models according to CV:\n")
