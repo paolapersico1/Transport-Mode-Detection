@@ -36,7 +36,5 @@ def load_data():
 def preprocess(X_trainval):
     imputer = SimpleImputer(strategy="median").fit(X_trainval)
     X_trainval = imputer.transform(X_trainval)
-    # preprocess_pipeline = Pipeline([('fillnan', SimpleImputer(strategy="median")),
-    #                                 ('scaler', StandardScaler())])
 
     return X_trainval, imputer

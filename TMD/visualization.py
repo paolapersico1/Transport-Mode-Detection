@@ -9,6 +9,7 @@ from sklearn import metrics
 from math import ceil
 
 
+
 def plot_class_distribution(y):
     distribution = np.unique(y, return_counts=True)
     count = np.sum(distribution[1])
@@ -77,7 +78,7 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
     colors = [hsv_to_rgb(cur, 1, 1) for cur in np.arange(0, 1, step)]
     fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
     for j, (name, model) in enumerate(models.items()):
-        one_hot_encoded_preds = label_binarize(model.predict(X), classes=classes)
+        one_hot_encoded_preds = label_binarize(model['pipeline'].predict(X), classes=classes)
         fpr = {}
         tpr = {}
         roc_auc = {}
@@ -99,7 +100,7 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
 def plot_confusions(models, X, y, n_cols=3):
     fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
     for i, (name, model) in enumerate(models.items()):
-        plot_confusion_matrix(model, X, y, ax=axs[int(i / n_cols), i % n_cols])
+        plot_confusion_matrix(model['pipeline'], X, y, ax=axs[int(i / n_cols), i % n_cols])
         axs[int(i / n_cols), i % n_cols].set_title(name)
     plt.show()
 
@@ -121,6 +122,7 @@ def show_best_cv_models(best_models):
     print("\nBest models according to CV:\n")
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)
+    pd.set_option('display.width', None)
 
     table = pd.DataFrame({'Model': best_models.keys(),
                           'Pre-processing': [x['pipeline'].named_steps.scaler for x in best_models.values()],
@@ -128,9 +130,11 @@ def show_best_cv_models(best_models):
                           'gamma': [get_hyperparam(x, "gamma") for x in best_models.values()],
                           'degree': [get_hyperparam(x, "degree") for x in best_models.values()],
                           'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.values()],
-                          'Accuracy': ["{:.2f}".format(x['accuracy']) for x in best_models.values()]})
+                          'Fit time (s)': ["{:.2f}".format(x['mean_fit_time']) for x in best_models.values()],
+                          'Train accuracy': ["{:.2f}".format(x['train_accuracy']) for x in best_models.values()],
+                          'Val accuracy': ["{:.2f}".format(x['val_accuracy']) for x in best_models.values()]})
     table.set_index('Model', inplace=True,)
-    table.sort_values(by=['Accuracy'], inplace=True, ascending=False)
+    table.sort_values(by=['Val accuracy'], inplace=True, ascending=False)
     print(table)
 
 def get_hyperparam(x, hyperparam):
