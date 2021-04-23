@@ -13,6 +13,12 @@ from sklearn.decomposition import PCA
 import torch
 from models_params import models
 from sklearn.model_selection import train_test_split
+from tabulate import tabulate
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import torch
+from sklearn.impute import SimpleImputer
 
 
 def get_columns_names(sensors):
@@ -49,7 +55,7 @@ if __name__ == '__main__':
     # true aumenta le performance ma lo rende non-deterministico
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
-    models_dir = 'saved_models1'
+    models_dir = 'saved_models'
     use_saved_if_available = True
     save_models = False
 
@@ -71,37 +77,25 @@ if __name__ == '__main__':
 
     visualization.plot_class_distribution(y)
     visualization.plot_missingvalues_var(X)
-
     # visualization.boxplot(X)
 
     visualization.plot_density_all(X)
     # for col in X.columns:
     #     visualization.density(X[col])
 
-    X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
-
-    X_trainval, imputer = data_layer.preprocess(X_trainval)
-
-    X_test = imputer.transform(X_test)
-
-    best_estimators = {}
-    predicts = []
-    accuracies_train = []
-    accuracies_test = []
-    results = []
-
-    for est_name, est, params in models:
-        if use_saved_if_available and path.exists(path.join(models_dir, est_name + ".joblib")):
-            print("Saved model found: {}".format(est_name))
-            best_estimators[est_name] = load(path.join(models_dir, est_name + ".joblib"))
-        else:
-            res, best_estimators[est_name] = model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)
-            if save_models:
-                dump(best_estimators[est_name], path.join(models_dir, est_name + ".joblib"))
-            results.append(pd.DataFrame(res))
-        accuracies_train.append(best_estimators[est_name].score(X_trainval, y_trainval))
-        predicts.append(best_estimators[est_name].predict(X_test))
-        accuracies_test.append(best_estimators[est_name].score(X_test, y_test))
+# <<<<<<< giacche
+#     for est_name, est, params in models:
+#         if use_saved_if_available and path.exists(path.join(models_dir, est_name + ".joblib")):
+#             print("Saved model found: {}".format(est_name))
+#             best_estimators[est_name] = load(path.join(models_dir, est_name + ".joblib"))
+#         else:
+#             res, best_estimators[est_name] = model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)
+#             if save_models:
+#                 dump(best_estimators[est_name], path.join(models_dir, est_name + ".joblib"))
+#             results.append(pd.DataFrame(res))
+#         accuracies_train.append(best_estimators[est_name].score(X_trainval, y_trainval))
+#         predicts.append(best_estimators[est_name].predict(X_test))
+#         accuracies_test.append(best_estimators[est_name].score(X_test, y_test))
 
     # print('------------------------------------')
     # pd.set_option('display.max_columns', None)
@@ -118,6 +112,68 @@ if __name__ == '__main__':
     visualization.plot_roc_for_all(best_estimators, X_test, y_test, np.unique(y_test))
 
     results_analysis(accuracies_train, accuracies_test, best_estimators)
+# =======
+    # train with 64,46,40,16 features
+    #dataset with features with less than 30% missing values
+    X_46 = X.dropna(thresh= (0.7 * X.shape[0]), axis=1)  #40 columns
+    print("Features with > 70% missing values:")
+    print(set(X.columns) ^ set(X_46.columns))
+
+    #dataset without light, gravity, magnetic, pressure, proximity features
+    removable_sensors = ["light", "gravity", "magnetic", "pressure", "proximity"]
+    removable_features = [col for col in X.columns if any(sensor in col for sensor in removable_sensors)]
+    X_40 = X.drop(removable_features, axis=1)  #40 columns
+
+    #dataset with only gyroscope (calibrated and uncalibrated), accelerometer and sound
+    relevant_sensors = ["gyroscope", "accelerometer", "sound"]
+    removable_features = [col for col in X.columns if all(sensor not in col for sensor in relevant_sensors)]
+    X_16 = X.drop(removable_features, axis=1)  #16 columns
+
+    best_models = {}
+    predicts = []
+    accuracies_train = []
+    accuracies_test = []
+    results = []
+    for fs, X in [("", X), ("_46", X_46), ("_40", X_40), ("_16", X_16)]:
+        X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
+        X_trainval, imputer = data_layer.preprocess(X_trainval)
+        X_test = imputer.transform(X_test)
+
+        for est_name, est, params in models:
+            est_name = est_name + fs
+            file_name = est_name + ".joblib"
+
+            if use_saved_if_available and path.exists(path.join(models_dir, file_name)):
+                print("Saved model found: {}".format(est_name))
+                best_estimators[est_name] = {'pipeline': load(path.join(models_dir, file_name))}
+            else:
+                best_models[est_name] = {'pipeline': model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)}
+                if save_models:
+                    dump(best_models[est_name]['pipeline'], path.join(models_dir, file_name))
+                results.append(pd.DataFrame(res))
+            accuracies_train.append(best_estimators[est_name]['pipeline'].score(X_trainval, y_trainval))
+            predicts.append(best_estimators[est_name]['pipeline'].predict(X_test))
+            accuracies_test.append(best_estimators[est_name]['pipeline'].score(X_test, y_test))
+
+            best_models[est_name]["accuracy"] = best_models[est_name]['pipeline'].score(X_trainval, y_trainval)
+            #visualization.plot_confusion(best_models[est_name]['pipeline'], X_trainval, y_trainval, est_name)
+        # print('------------------------------------')
+        # pd.set_option('display.max_columns', None)
+        # pd.set_option('display.max_rows', None)
+        # pd.set_option('display.max_colwidth', None)
+        # print([result.columns for result in results])
+        # names = list(best_estimators.keys())
+        # [(print(names[i]), print(
+        #     result.loc[:, result.columns.str.startswith("param_")].assign(mean_test_score=result['mean_test_score'],
+        #                                                                   rank_test_score=result['rank_test_score'])),
+        #   print('---')) for i, result in
+        #  enumerate(results)]
+        visualization.plot_roc_for_all(best_estimators, X_test, y_test, np.unique(y_test))
+        results_analysis(accuracies_train, accuracies_test, best_estimators)
+
+    visualization.show_best_cv_models(best_models)
+    ## here Trainval is with last feature selection
+# >>>>>>> main
 
     # kf = KFold(n_splits=10)
     # for train_index, val_index in kf.split(X_trainval):

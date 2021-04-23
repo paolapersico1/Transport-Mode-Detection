@@ -37,7 +37,6 @@ per training
 	VV affinare iperparametri J
 	migliorare stampa iperparametri best model P
 	VV bar plot accuratezza per ogni best model J
-	stampa decision boundary P
 per testing
 	VV bar plot accuratezza per ogni best model J
 	TD roc curve di ogni best model  J

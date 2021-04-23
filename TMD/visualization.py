@@ -2,10 +2,11 @@ from colorsys import hsv_to_rgb
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sbn
+import pandas as pd
 from sklearn.metrics import plot_confusion_matrix, roc_curve, auc
-from math import ceil
-
 from sklearn.preprocessing import label_binarize
+from sklearn import metrics
+from math import ceil
 
 
 def plot_class_distribution(y):
@@ -115,3 +116,27 @@ def plot_accuracies(models_names, train_scores, test_scores, sort=True):
     plt.ylabel("Score")
     plt.legend()
     plt.show()
+
+def show_best_cv_models(best_models):
+    print("\nBest models according to CV:\n")
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_colwidth', None)
+
+    table = pd.DataFrame({'Model': best_models.keys(),
+                          'Pre-processing': [x['pipeline'].named_steps.scaler for x in best_models.values()],
+                          'C': [get_hyperparam(x, "C") for x in best_models.values()],
+                          'gamma': [get_hyperparam(x, "gamma") for x in best_models.values()],
+                          'degree': [get_hyperparam(x, "degree") for x in best_models.values()],
+                          'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.values()],
+                          'Accuracy': ["{:.2f}".format(x['accuracy']) for x in best_models.values()]})
+    table.set_index('Model', inplace=True,)
+    table.sort_values(by=['Accuracy'], inplace=True, ascending=False)
+    print(table)
+
+def get_hyperparam(x, hyperparam):
+    model_hyperparams = x['pipeline'].named_steps.clf.get_params()
+    if hyperparam in model_hyperparams.keys():
+        result = model_hyperparams[hyperparam]
+    else:
+        result = "n/a"
+    return result
