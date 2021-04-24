@@ -31,16 +31,9 @@ def pca_analysis():
     # visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
 
 
-def results_analysis(best_estimators):
-    # accuracies_train = [x['train_accuracy'] for x in best_estimators.values()]
-    # accuracies_test = [x['val_accuracy'] for x in best_estimators.values()]
-    # # visualization.plot_confusions(best_estimators, X_trainval, y_trainval)
-    # accuracies_train, accuracies_test, models_names = (list(t) for t in zip(*sorted(
-    #     zip(accuracies_train, accuracies_test, best_estimators.keys()), reverse=True)))
-    # [print(name, '{:.2f}'.format(train_score), '{:.2f}'.format(test_score)) for train_score, test_score, name in
-    #  zip(accuracies_train, accuracies_test, models_names)]
-    # # visualization.plot_accuracies(models_names, accuracies_train, accuracies_test, False)
-    print("okay")
+def results_analysis(best_estimators, X_test, y_test):
+    visualization.plot_roc_for_all(best_estimators, X_test, y_test, np.unique(y_test))
+    visualization.plot_confusions(best_estimators, X_test, y_test)
 
 if __name__ == '__main__':
     torch.manual_seed(0)
@@ -124,9 +117,17 @@ if __name__ == '__main__':
         #                                                                   rank_test_score=result['rank_test_score'])),
         #   print('---')) for i, result in
         #  enumerate(results)]
-    #visualization.plot_roc_for_all(best_models, X_test, y_test, np.unique(y_test))
-    results_analysis(best_models)
-    visualization.show_best_cv_models(best_models)
+
+        current_bests = {k:v for k, v in best_models.items() if k.endswith(fs)}
+        results_analysis(current_bests, X_test, y_test)
+        visualization.plot_all()
+    accuracies_train = [x['train_accuracy'] for x in best_models.values()]
+    accuracies_test = [x['val_accuracy'] for x in best_models.values()]
+    accuracies_train, accuracies_test, models_names = (list(t) for t in zip(*sorted(
+        zip(accuracies_train, accuracies_test, best_models.keys()), reverse=True)))
+    visualization.plot_accuracies(models_names, accuracies_train, accuracies_test, False)
+    visualization.plot_all()
+    # visualization.show_best_cv_models(best_models)
 
 
     # kf = KFold(n_splits=10)

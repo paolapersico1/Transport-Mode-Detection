@@ -11,6 +11,7 @@ from math import ceil
 
 
 def plot_class_distribution(y):
+    # plt.figure()
     distribution = np.unique(y, return_counts=True)
     count = np.sum(distribution[1])
     [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
@@ -18,10 +19,11 @@ def plot_class_distribution(y):
     axs[0].bar(x=distribution[0], height=distribution[1])
     axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', )
     fig.suptitle("Number of samples for each class")
-    plt.show()
+
 
 
 def plot_missingvalues_var(X):
+    plt.figure()
     x = range(1, X.shape[1] + 1)
     y = [x * 100 / len(X) for x in X.isna().sum()]
     plt.barh(y=x, width=y)
@@ -29,17 +31,19 @@ def plot_missingvalues_var(X):
     for i, v in enumerate(y):
         plt.text(v + 1, i + .25, str(int(v)) + "%", color='blue', size='xx-small')
     plt.title("Percentages of missing values for each feature")
-    plt.show()
+
 
 
 def boxplot(X):
+    plt.figure()
     x = range(1, X.shape[1] + 1)
     plt.boxplot(X)
     plt.xticks(x, readable_labels(X.columns), size='xx-small', rotation=45)
-    plt.show()
+
 
 
 def plot_density_all(X, n_measures=4):
+    # plt.figure()
     fig, axs = plt.subplots(nrows=int(len(X.columns) / n_measures), ncols=n_measures)
     cols = readable_labels(X.columns)
     for i, col in enumerate(X.columns):
@@ -49,21 +53,21 @@ def plot_density_all(X, n_measures=4):
         axs[int(i / n_measures), 0].set_ylabel(cols[i].split('#')[0], rotation='horizontal', ha='right')
         axs[0, i % n_measures].set_title(cols[i].split('#')[1])
     fig.suptitle("Distribution per sensor")
-    plt.show()
 
 
 def density(X):
+    plt.figure()
     sbn.kdeplot(X)
-    plt.show()
+
 
 
 def plot_explained_variance(labels, y):
+    plt.figure()
     x = range(1, len(labels) + 1)
     plt.barh(x, width=y)
     plt.yticks(x, readable_labels(labels), size='xx-small')
     # plt.xticks(x, readable_labels(labels), size='xx-small', rotation=45)
     plt.title("Explained variance for each variable")
-    plt.show()
 
 
 def readable_labels(labels):
@@ -71,6 +75,7 @@ def readable_labels(labels):
 
 
 def plot_roc_for_all(models, X, y, classes, n_cols=3):
+    # plt.figure()
     n_classes = len(classes)
     lw = 2
     one_hot_encoded_y = label_binarize(y, classes=classes)
@@ -85,27 +90,26 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
         for i in range(n_classes):
             fpr[i], tpr[i], _ = roc_curve(one_hot_encoded_y[:, i], one_hot_encoded_preds[:, i])
             roc_auc[i] = auc(fpr[i], tpr[i])
-
         for i, label, color in zip(range(n_classes), classes, colors):
             axs[int(j / n_cols), j % n_cols].plot(fpr[i], tpr[i], color=color, lw=lw,
-                                                  label='ROC curve of class {0} (area = {1:0.2f})'
+                                                  label='{0} (area = {1:0.2f})'
                                                         ''.format(label, roc_auc[i]))
             axs[int(j / n_cols), j % n_cols].plot([0, 1], [0, 1], 'k--', lw=lw)
             axs[int(j / n_cols), j % n_cols].set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate',
                                                  ylabel='True Positive Rate', title=name)
             axs[int(j / n_cols), j % n_cols].legend(loc="lower right")
-    plt.show()
 
 
 def plot_confusions(models, X, y, n_cols=3):
+    # plt.figure()
     fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
     for i, (name, model) in enumerate(models.items()):
         plot_confusion_matrix(model['pipeline'], X, y, ax=axs[int(i / n_cols), i % n_cols])
         axs[int(i / n_cols), i % n_cols].set_title(name)
-    plt.show()
 
 
 def plot_accuracies(models_names, train_scores, test_scores, sort=True):
+    plt.figure()
     if sort:
         train_scores, test_scores, models_names = (list(t) for t in
                                                    zip(*sorted(zip(train_scores, test_scores, models_names),
@@ -116,7 +120,6 @@ def plot_accuracies(models_names, train_scores, test_scores, sort=True):
     plt.xticks(X_axis, models_names)
     plt.ylabel("Score")
     plt.legend()
-    plt.show()
 
 def show_best_cv_models(best_models):
     print("\nBest models according to CV:\n")
@@ -144,3 +147,6 @@ def get_hyperparam(x, hyperparam):
     else:
         result = "n/a"
     return result
+
+def plot_all():
+    plt.show()
