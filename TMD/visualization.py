@@ -82,6 +82,7 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
     step = 1.0 / n_classes
     colors = [hsv_to_rgb(cur, 1, 1) for cur in np.arange(0, 1, step)]
     fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
+    plt.subplots_adjust(hspace=0.5)
     for j, (name, model) in enumerate(models.items()):
         one_hot_encoded_preds = label_binarize(model['pipeline'].predict(X), classes=classes)
         fpr = {}
@@ -103,6 +104,7 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
 def plot_confusions(models, X, y, n_cols=3):
     # plt.figure()
     fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
+    plt.subplots_adjust(hspace=0.5)
     for i, (name, model) in enumerate(models.items()):
         plot_confusion_matrix(model['pipeline'], X, y, ax=axs[int(i / n_cols), i % n_cols])
         axs[int(i / n_cols), i % n_cols].set_title(name)
