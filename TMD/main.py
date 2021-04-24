@@ -1,19 +1,12 @@
 from os import makedirs, path
-from functools import reduce
-import numpy as np
-import pandas as pd
 import visualization
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
 from joblib import dump, load
 import data_layer
 import model_runner
 from data_layer import load_data
 from sklearn.decomposition import PCA
-import torch
 from models_params import models
 from sklearn.model_selection import train_test_split
-from tabulate import tabulate
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -28,7 +21,7 @@ def pca_analysis():
     pca.fit(smp_imputer.fit_transform(std_scaler.fit_transform(X)))
     most_important = [np.abs(pca.components_[i]).argmax() for i in range(X.shape[1])]
     most_important_names = [X.columns[most_important[i]] for i in range(X.shape[1])]
-    # visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
+    visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
 
 
 def results_analysis(best_estimators, X_test, y_test):
@@ -58,30 +51,34 @@ if __name__ == '__main__':
 
     pca_analysis()
 
-    # visualization.plot_class_distribution(y)
-    # visualization.plot_missingvalues_var(X)
-    # visualization.boxplot(X)
+    visualization.plot_class_distribution(y)
+    visualization.plot_missingvalues_var(X)
+    visualization.boxplot(X)
 
-    # visualization.plot_density_all(X)
-    # for col in X.columns:
-    #     visualization.density(X[col])
+    visualization.plot_density_all(X)
+
+    visualization.plot_all()
 
     # train with 64,46,40,16 features
-    # dataset with features with less than 30% missing values
-    X_46 = X.dropna(thresh=(0.7 * X.shape[0]), axis=1)  # 46 columns
 
     # dataset without light, gravity, magnetic, pressure, proximity features
     removable_sensors = ["light", "gravity", "magnetic", "pressure", "proximity"]
     removable_features = [col for col in X.columns if any(sensor in col for sensor in removable_sensors)]
-    X_40 = X.drop(removable_features, axis=1)  # 40 columns
 
     # dataset with only gyroscope (calibrated and uncalibrated), accelerometer and sound
     relevant_sensors = ["gyroscope", "accelerometer", "sound"]
     removable_features = [col for col in X.columns if all(sensor not in col for sensor in relevant_sensors)]
-    X_16 = X.drop(removable_features, axis=1)  # 16 columns
 
+    X_subsets = [
+        X,  # 64 columns
+        X.dropna(thresh=(0.7 * X.shape[0]), axis=1),  # 46 columns (kept features with less than 30% missing values)
+        X.drop(removable_features, axis=1),  # 40 columns
+        X.drop(removable_features, axis=1)  # 16 columns
+    ]
+    subsets_sizes = ["_" + str(len(df.columns)) for df in X_subsets]
     best_models = {}
-    for fs, X in [("_64", X), ("_46", X_46), ("_40", X_40), ("_16", X_16)]:
+
+    for fs, X in [(name, df) for (name, df) in zip(subsets_sizes, X_subsets)]:
         X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
         X_trainval, imputer = data_layer.preprocess(X_trainval)
         X_test = imputer.transform(X_test)
@@ -101,67 +98,25 @@ if __name__ == '__main__':
                     result.to_csv(path.join(models_dir, "csvs", est_name + ".csv"))
                     dump(best_models[est_name]['pipeline'], path.join(models_dir, file_name))
 
-            # best_models[est_name]["train_accuracy"] = best_models[est_name]['pipeline'].score(X_trainval, y_trainval)
             best_models[est_name]["train_accuracy"] = \
                 result.loc[result['rank_test_score'] == 1]["mean_train_score"].values[0]
             best_models[est_name]["val_accuracy"] = \
                 result.loc[result['rank_test_score'] == 1]["mean_test_score"].values[0]
             best_models[est_name]["mean_fit_time"] = result.loc[result['rank_test_score'] == 1]["mean_fit_time"].values[
                 0]
-            # best_models[est_name]["predicts"] = best_models[est_name]['pipeline'].predict(X_test)
-            # best_models[est_name]["test_accuracy"] = best_models[est_name]['pipeline'].score(X_test, y_test)
-        # print('------------------------------------')
-        # pd.set_option('display.max_columns', None)
-        # pd.set_option('display.max_rows', None)
-        # pd.set_option('display.max_colwidth', None)
-        # print([result.columns for result in results])
-        # names = list(best_estimators.keys())
-        # [(print(names[i]), print(
-        #     result.loc[:, result.columns.str.startswith("param_")].assign(mean_test_score=result['mean_test_score'],
-        #                                                                   rank_test_score=result['rank_test_score'])),
-        #   print('---')) for i, result in
-        #  enumerate(results)]
+        current_bests = {k: v for k, v in best_models.items() if k.endswith(fs)}
+        results_analysis(current_bests, X_test, y_test)
 
-        # current_bests = {k: v for k, v in best_models.items() if k.endswith(fs)}
-        # results_analysis(current_bests, X_test, y_test)
-        # visualization.plot_all()
-
-        # accuracies_train = [x['train_accuracy'] for x in current_bests.values()]
-        # accuracies_test = [x['val_accuracy'] for x in current_bests.values()]
-        # accuracies_train, accuracies_test, models_names = (list(t) for t in zip(*sorted(
-        #     zip(accuracies_train, accuracies_test, current_bests.keys()), reverse=True)))
-        # visualization.plot_accuracies(models_names, accuracies_train, accuracies_test, False)
-
-    estname = [estname for estname, _, _ in models]
-    sizes = ["_64", "_46", "_40", "_16"]
-    pd_modes = pd.DataFrame(best_models)
-    aaaaaaaaa = [pd_modes[[col for col in pd_modes if col.startswith(name)]].loc[['train_accuracy', 'val_accuracy']] for
-                 name in estname]
-    bbbbbbbbb = [pd_modes[[col for col in pd_modes if col.endswith(name)]].loc[['train_accuracy', 'val_accuracy']] for
-                 name in sizes]
-    # test_accuracies = [x['train_accuracy'] for x in best_models.values()]
-    # val_accuracies = [x['val_accuracy'] for x in best_models.values()]
-
-    # bests_per_model = {k: v for k, v in best_models.items() if k.startswith(estname)}
-    # accuracies_train = [x['train_accuracy'] for x in best_models.values()]
-    # accuracies_test = [x['val_accuracy'] for x in current_bests.values()]
-    # accuracies_train, accuracies_test, models_names = (list(t) for t in zip(*sorted(
-    #     zip(accuracies_train, accuracies_test, current_bests.keys()), reverse=True)))
-    visualization.plot_accuracies(aaaaaaaaa)
-    visualization.plot_accuracies(bbbbbbbbb, n_cols=2)
+    models_names = [est_name for est_name, _, _ in models]
+    pd_models = pd.DataFrame(best_models)
+    accuracies_table_per_models_names = [pd_models[[col for col in pd_models if col.startswith(name)]] for name in
+                                         models_names]
+    accuracies_table_per_models_sizes = [pd_models[[col for col in pd_models if col.endswith(name)]] for name in
+                                         subsets_sizes]
+    visualization.plot_accuracies(accuracies_table_per_models_names, title='Accuracies per Model')
+    visualization.plot_accuracies(accuracies_table_per_models_sizes, n_cols=2, title='Accuracies per Dataset Size')
     visualization.plot_all()
-    #
-    # accuracies_train, accuracies_test, models_names = (list(t) for t in zip(*sorted(
-    #     zip(accuracies_train, accuracies_test, best_models.keys()), reverse=True)))
-    #
-    # accur_train1, accur_test1, model_names1 = [list(atrain, atest, name) for atrain, atest, name in
-    #                                            zip(accuracies_train, accuracies_test, models_names) if
-    #                                            name.endswith(fs)]
-    #
-    # visualization.plot_accuracies(models_names, accuracies_train, accuracies_test, False)
-    # visualization.plot_accuracies(models_names, accuracies_train, accuracies_test, False)
-    # visualization.plot_all()
-    # visualization.show_best_cv_models(best_models)
+    visualization.show_best_cv_models(best_models)
 
     # kf = KFold(n_splits=10)
     # for train_index, val_index in kf.split(X_trainval):
