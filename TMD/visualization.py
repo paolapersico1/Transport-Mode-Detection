@@ -9,7 +9,6 @@ from sklearn import metrics
 from math import ceil
 
 
-
 def plot_class_distribution(y):
     # plt.figure()
     distribution = np.unique(y, return_counts=True)
@@ -19,7 +18,6 @@ def plot_class_distribution(y):
     axs[0].bar(x=distribution[0], height=distribution[1])
     axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', )
     fig.suptitle("Number of samples for each class")
-
 
 
 def plot_missingvalues_var(X):
@@ -33,13 +31,11 @@ def plot_missingvalues_var(X):
     plt.title("Percentages of missing values for each feature")
 
 
-
 def boxplot(X):
     plt.figure()
     x = range(1, X.shape[1] + 1)
     plt.boxplot(X)
     plt.xticks(x, readable_labels(X.columns), size='xx-small', rotation=45)
-
 
 
 def plot_density_all(X, n_measures=4):
@@ -58,7 +54,6 @@ def plot_density_all(X, n_measures=4):
 def density(X):
     plt.figure()
     sbn.kdeplot(X)
-
 
 
 def plot_explained_variance(labels, y):
@@ -121,6 +116,23 @@ def plot_accuracies(models_names, train_scores, test_scores, sort=True):
     plt.ylabel("Score")
     plt.legend()
 
+
+# def plot_accuracies(models_names, train_scores, test_scores, n_cols=3):
+def plot_accuracies(accuracies_table_per_models, n_cols=3):
+    fig, axs = plt.subplots(nrows=ceil(len(accuracies_table_per_models) / n_cols), ncols=n_cols)
+    for i, accuracies_table in enumerate(accuracies_table_per_models):
+        accuracies_table.sort_values(by=['val_accuracy'], inplace=True, ascending=False, axis=1)
+        X_axis = np.arange(len(accuracies_table.columns))
+        axs[int(i / n_cols), i % n_cols].bar(X_axis - 0.2, accuracies_table.loc['train_accuracy'], 0.4,
+                                             label='Train Score')
+        axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['val_accuracy'], 0.4,
+                                             label='Test Score')
+        plt.sca(axs[int(i / n_cols), i % n_cols])
+        plt.xticks(X_axis, accuracies_table.columns, rotation=30)
+        axs[int(i / n_cols), i % n_cols].set_ylabel("Score")
+        axs[int(i / n_cols), i % n_cols].legend()
+
+
 def show_best_cv_models(best_models):
     print("\nBest models according to CV:\n")
     pd.set_option('display.max_columns', None)
@@ -136,9 +148,10 @@ def show_best_cv_models(best_models):
                           'Fit time (s)': ["{:.2f}".format(x['mean_fit_time']) for x in best_models.values()],
                           'Train accuracy': ["{:.2f}".format(x['train_accuracy']) for x in best_models.values()],
                           'Val accuracy': ["{:.2f}".format(x['val_accuracy']) for x in best_models.values()]})
-    table.set_index('Model', inplace=True,)
+    table.set_index('Model', inplace=True, )
     table.sort_values(by=['Val accuracy'], inplace=True, ascending=False)
     print(table)
+
 
 def get_hyperparam(x, hyperparam):
     model_hyperparams = x['pipeline'].named_steps.clf.get_params()
@@ -147,6 +160,7 @@ def get_hyperparam(x, hyperparam):
     else:
         result = "n/a"
     return result
+
 
 def plot_all():
     plt.show()
