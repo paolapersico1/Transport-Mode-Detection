@@ -98,13 +98,11 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
             fpr[i], tpr[i], _ = roc_curve(one_hot_encoded_y[:, i], one_hot_encoded_preds[:, i])
             roc_auc[i] = auc(fpr[i], tpr[i])
         for i, label, color in zip(range(n_classes), classes, colors):
-            axs[int(j / n_cols), j % n_cols].plot(fpr[i], tpr[i], color=color, lw=lw,
-                                                  label='{0} (area = {1:0.2f})'
-                                                        ''.format(label, roc_auc[i]))
-            axs[int(j / n_cols), j % n_cols].plot([0, 1], [0, 1], 'k--', lw=lw)
-            axs[int(j / n_cols), j % n_cols].set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate',
-                                                 ylabel='True Positive Rate', title=name)
-            axs[int(j / n_cols), j % n_cols].legend(loc="lower right")
+            ax = axs[int(j / n_cols), j % n_cols]
+            ax.plot(fpr[i], tpr[i], color=color, lw=lw, label='{0} (area = {1:0.2f})'.format(label, roc_auc[i]))
+            ax.plot([0, 1], [0, 1], 'k--', lw=lw)
+            ax.set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate', ylabel='True Positive Rate', title=name)
+            ax.legend(loc="lower right")
     fig.suptitle("ROC Curves per Model (Dataset Size: {})".format(X.shape[1]))
 
 
@@ -123,22 +121,20 @@ def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
     for i, accuracies_table in enumerate(scores_table):
         accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
+        ax = axs[int(i / n_cols), i % n_cols]
         if testing:
-            bars = axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['final_test_score'], 0.4,
-                                                 label='Test Score')
+            bars = ax.bar(X_axis + 0.2, accuracies_table.loc['final_test_score'], 0.4, label='Test Score')
             for bar in bars:
                 yval = bar.get_height()
-                axs[int(i / n_cols), i % n_cols].text(bar.get_x() + 0.1,  yval + 0.01, str(int(yval * 100)) + "%", size='xx-small')
+                ax.text(bar.get_x() + 0.1,  yval + 0.01, str(int(yval * 100)) + "%", size='xx-small')
         else:
-            axs[int(i / n_cols), i % n_cols].bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4,
-                                                 label='Train Score')
-            axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4,
-                                                 label='Val Score')
+            ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
+            ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
 
-        plt.sca(axs[int(i / n_cols), i % n_cols])
+        plt.sca(ax)
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
-        axs[int(i / n_cols), i % n_cols].set_ylabel("Score")
-        axs[int(i / n_cols), i % n_cols].legend()
+        ax.set_ylabel("Score")
+        ax.legend()
     fig.suptitle(title)
 
 def plot_all():
