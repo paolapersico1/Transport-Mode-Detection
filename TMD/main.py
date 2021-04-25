@@ -11,8 +11,6 @@ import model_runner
 import preprocessing
 from models_config import models
 
-
-
 def set_deterministic_behavior():
     torch.manual_seed(0)
     torch.set_deterministic(True)
@@ -38,13 +36,15 @@ if __name__ == '__main__':
         X_train, X_test = preprocessing.remove_nan(X_train, X_test)
 
         current_bests = model_runner.retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_models, models_dir)
+        current_bests = evaluation.add_test_scores(current_bests, X_test, y_test)
         best_models.update(current_bests)
-        #plot roc curve and confusion matrix of each model
-        evaluation.testing_results_analysis(current_bests, X_test, y_test)
+        # plot roc curve and confusion matrix of each model
+        evaluation.partial_results_analysis(current_bests, X_test, y_test)
 
-    #display cross-validation complete results
+
+    # display cross-validation and testing complete results
     models_names = [est_name for est_name, _, _ in models]
-    evaluation.validation_results_analysis(best_models, models_names, subsets_sizes)
+    evaluation.results_analysis(best_models, models_names, subsets_sizes)
 
 
     # kf = KFold(n_splits=10)

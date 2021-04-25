@@ -58,7 +58,7 @@ def plot_missingvalues_var(X):
     plt.barh(y=x, width=y)
     plt.yticks(x, readable_labels(X.columns), size='xx-small')
     for i, v in enumerate(y):
-        plt.text(v + 1, i + .25, str(int(v)) + "%", color='blue', size='xx-small')
+        plt.text(v + 1, i + .25, str(int(v)) + "%", size='xx-small')
     plt.title("Percentages of missing values for each feature")
 
 
@@ -117,16 +117,24 @@ def plot_confusion_matrices(models, X, y, n_cols=3):
     fig.suptitle("Confusion Matrices per Model (Dataset Size: {})".format(X.shape[1]))
 
 
-def plot_accuracies(scores_table, n_cols=3, title=""):
+def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
     fig, axs = plt.subplots(nrows=ceil(len(scores_table) / n_cols), ncols=n_cols)
-    plt.subplots_adjust(hspace=0.3)
+    plt.subplots_adjust(hspace=0.4)
     for i, accuracies_table in enumerate(scores_table):
         accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
-        axs[int(i / n_cols), i % n_cols].bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4,
-                                             label='Train Score')
-        axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4,
-                                             label='Val Score')
+        if testing:
+            bars = axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['final_test_score'], 0.4,
+                                                 label='Test Score')
+            for bar in bars:
+                yval = bar.get_height()
+                axs[int(i / n_cols), i % n_cols].text(bar.get_x() + 0.1,  yval + 0.01, str(int(yval * 100)) + "%", size='xx-small')
+        else:
+            axs[int(i / n_cols), i % n_cols].bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4,
+                                                 label='Train Score')
+            axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4,
+                                                 label='Val Score')
+
         plt.sca(axs[int(i / n_cols), i % n_cols])
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
         axs[int(i / n_cols), i % n_cols].set_ylabel("Score")
