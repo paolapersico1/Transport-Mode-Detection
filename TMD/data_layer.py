@@ -1,10 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from torch.utils.data import Dataset
 import torch
+from torch.utils.data import Dataset
 from sklearn.impute import SimpleImputer
 
 
@@ -23,7 +20,7 @@ class MyTorchDataset(Dataset):
 
 
 def load_data():
-    data = pd.read_csv('acquisition/dataset_5secondWindow.csv', index_col=0)
+    data = pd.read_csv('dataset/dataset_5secondWindow.csv', index_col=0)
     data = data.iloc[:, 4:-1]
     # print('data shape: {}'.format(data.shape))
     X = data.iloc[:, :-1]
@@ -31,10 +28,3 @@ def load_data():
     num_classes = len(np.unique(y))
 
     return X, y, num_classes
-
-
-def preprocess(X_trainval):
-    imputer = SimpleImputer(strategy="median").fit(X_trainval)
-    X_trainval = imputer.transform(X_trainval)
-
-    return X_trainval, imputer

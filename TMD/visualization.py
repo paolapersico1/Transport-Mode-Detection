@@ -13,7 +13,7 @@ def readable_labels(labels):
 
 
 def get_hyperparam(x, hyperparam):
-    model_hyperparams = x['pipeline'].named_steps.clf.get_params()
+    model_hyperparams = x.named_steps.clf.get_params()
     if hyperparam in model_hyperparams.keys():
         result = model_hyperparams[hyperparam]
     else:
@@ -27,15 +27,15 @@ def show_best_cv_models(best_models):
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.width', None)
 
-    table = pd.DataFrame({'Model': best_models.keys(),
-                          'Pre-processing': [x['pipeline'].named_steps.scaler for x in best_models.values()],
-                          'C': [get_hyperparam(x, "C") for x in best_models.values()],
-                          'gamma': [get_hyperparam(x, "gamma") for x in best_models.values()],
-                          'degree': [get_hyperparam(x, "degree") for x in best_models.values()],
-                          'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.values()],
-                          'Fit time (s)': ["{:.2f}".format(x['mean_fit_time']) for x in best_models.values()],
-                          'Train accuracy': ["{:.2f}".format(x['train_accuracy']) for x in best_models.values()],
-                          'Val accuracy': ["{:.2f}".format(x['val_accuracy']) for x in best_models.values()]})
+    table = pd.DataFrame({'Model': best_models.columns,
+                          'Pre-processing': [pipeline.named_steps.scaler for pipeline in best_models.loc['pipeline']],
+                          'C': [get_hyperparam(x, "C") for x in best_models.loc['pipeline']],
+                          'gamma': [get_hyperparam(x, "gamma") for x in best_models.loc['pipeline']],
+                          'degree': [get_hyperparam(x, "degree") for x in best_models.loc['pipeline']],
+                          'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.loc['pipeline']],
+                          'Fit time (s)': ["{:.2f}".format(x) for x in best_models.loc['mean_fit_time']],
+                          'Train accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_train_score']],
+                          'Val accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_test_score']]})
     table.set_index('Model', inplace=True, )
     table.sort_values(by=['Val accuracy'], inplace=True, ascending=False)
     print(table)
@@ -43,8 +43,8 @@ def show_best_cv_models(best_models):
 
 def plot_class_distribution(y):
     distribution = np.unique(y, return_counts=True)
-    count = np.sum(distribution[1])
-    [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
+    # count = np.sum(distribution[1])
+    # [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
     fig, axs = plt.subplots(nrows=1, ncols=2)
     axs[0].bar(x=distribution[0], height=distribution[1])
     axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', )
@@ -108,7 +108,7 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
     fig.suptitle("ROC Curves per Model (Dataset Size: {})".format(X.shape[1]))
 
 
-def plot_confusions(models, X, y, n_cols=3):
+def plot_confusion_matrices(models, X, y, n_cols=3):
     fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
     plt.subplots_adjust(hspace=0.25)
     for i, (name, model) in enumerate(models.items()):
@@ -117,22 +117,21 @@ def plot_confusions(models, X, y, n_cols=3):
     fig.suptitle("Confusion Matrices per Model (Dataset Size: {})".format(X.shape[1]))
 
 
-def plot_accuracies(accuracies_table_per_models, n_cols=3, title=""):
-    fig, axs = plt.subplots(nrows=ceil(len(accuracies_table_per_models) / n_cols), ncols=n_cols)
+def plot_accuracies(scores_table, n_cols=3, title=""):
+    fig, axs = plt.subplots(nrows=ceil(len(scores_table) / n_cols), ncols=n_cols)
     plt.subplots_adjust(hspace=0.25)
-    for i, accuracies_table in enumerate(accuracies_table_per_models):
-        accuracies_table = accuracies_table.sort_values(by=['val_accuracy'], ascending=False, axis=1)
+    for i, accuracies_table in enumerate(scores_table):
+        accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
-        axs[int(i / n_cols), i % n_cols].bar(X_axis - 0.2, accuracies_table.loc['train_accuracy'], 0.4,
+        axs[int(i / n_cols), i % n_cols].bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4,
                                              label='Train Score')
-        axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['val_accuracy'], 0.4,
+        axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4,
                                              label='Val Score')
         plt.sca(axs[int(i / n_cols), i % n_cols])
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
         axs[int(i / n_cols), i % n_cols].set_ylabel("Score")
         axs[int(i / n_cols), i % n_cols].legend()
     fig.suptitle(title)
-
 
 def plot_all():
     plt.show()
