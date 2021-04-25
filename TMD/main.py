@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     best_models = {}
     #for each dataset subset
-    for fs, X in [(name, df) for (name, df) in zip(subsets_sizes, X_subsets)]:
+    for fs, X in zip(subsets_sizes, X_subsets):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
         X_train, X_test = preprocessing.remove_nan(X_train, X_test)
 
