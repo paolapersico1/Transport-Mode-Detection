@@ -5,7 +5,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from models_params import models
+from models_config import models
 
 def get_rank1_info(result, attribute):
     return result.loc[result['rank_test_score'] == 1][attribute].values[0]

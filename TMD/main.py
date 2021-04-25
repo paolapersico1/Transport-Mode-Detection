@@ -9,7 +9,7 @@ import visualization
 import data_layer
 import model_runner
 import preprocessing
-from models_params import models
+from models_config import models
 
 
 
