@@ -87,8 +87,9 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
     one_hot_encoded_y = label_binarize(y, classes=classes)
     step = 1.0 / n_classes
     colors = [hsv_to_rgb(cur, 1, 1) for cur in np.arange(0, 1, step)]
-    fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
-    plt.subplots_adjust(hspace=0.3)
+    n_rows = ceil(len(models) / n_cols)
+    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
+    plt.subplots_adjust(wspace = 0.4, hspace=0.3)
     for j, (name, model) in enumerate(models.items()):
         one_hot_encoded_preds = label_binarize(model['pipeline'].predict(X), classes=classes)
         fpr = {}
@@ -98,7 +99,10 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
             fpr[i], tpr[i], _ = roc_curve(one_hot_encoded_y[:, i], one_hot_encoded_preds[:, i])
             roc_auc[i] = auc(fpr[i], tpr[i])
         for i, label, color in zip(range(n_classes), classes, colors):
-            ax = axs[int(j / n_cols), j % n_cols]
+            if n_rows > 1:
+                ax = axs[int(j / n_cols), j % n_cols]
+            else:
+                ax = axs[j % n_cols]
             ax.plot(fpr[i], tpr[i], color=color, lw=lw, label='{0} (area = {1:0.2f})'.format(label, roc_auc[i]))
             ax.plot([0, 1], [0, 1], 'k--', lw=lw)
             ax.set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate', ylabel='True Positive Rate', title=name)
@@ -107,21 +111,30 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
 
 
 def plot_confusion_matrices(models, X, y, n_cols=3):
-    fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
-    plt.subplots_adjust(hspace=0.3)
+    n_rows = ceil(len(models) / n_cols)
+    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
+    plt.subplots_adjust(wspace = 0.4, hspace=0.3)
     for i, (name, model) in enumerate(models.items()):
-        plot_confusion_matrix(model['pipeline'], X, y, ax=axs[int(i / n_cols), i % n_cols])
-        axs[int(i / n_cols), i % n_cols].set_title(name)
+        if n_rows > 1:
+            ax = axs[int(i / n_cols), i % n_cols]
+        else:
+            ax = axs[i % n_cols]
+        plot_confusion_matrix(model['pipeline'], X, y, ax=ax)
+        ax.set_title(name)
     fig.suptitle("Confusion Matrices per Model (Dataset Size: {})".format(X.shape[1]))
 
 
 def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
-    fig, axs = plt.subplots(nrows=ceil(len(scores_table) / n_cols), ncols=n_cols)
-    plt.subplots_adjust(hspace=0.4)
+    n_rows = ceil(len(scores_table) / n_cols)
+    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
+    plt.subplots_adjust(wspace = 0.2, hspace=0.4)
     for i, accuracies_table in enumerate(scores_table):
         accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
-        ax = axs[int(i / n_cols), i % n_cols]
+        if n_rows > 1:
+            ax = axs[int(i / n_cols), i % n_cols]
+        else:
+            ax = axs[i % n_cols]
         if testing:
             bars = ax.bar(X_axis + 0.2, accuracies_table.loc['final_test_score'], 0.4, label='Test Score')
             for bar in bars:
