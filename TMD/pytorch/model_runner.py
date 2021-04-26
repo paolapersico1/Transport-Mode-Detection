@@ -7,7 +7,9 @@ def train_loop(dataloader, model, loss_fn, optimizer, num_epochs, device):
     model.train()
     size = len(dataloader.dataset)
     for epoch in range(num_epochs):
+        print("Epoch: {}/{}".format(epoch, num_epochs))
         for batch, (X, y) in enumerate(dataloader):
+            iteration = batch * len(X)
             X, y = X.to(device), y.to(device)
             optimizer.zero_grad()
 
@@ -18,8 +20,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, num_epochs, device):
             loss.backward()
             optimizer.step()
 
-            if batch % 100 == 0:
-                loss, current = loss.item(), batch * len(X)
+            if iteration % 100 == 0:
+                loss, current = loss.item(), iteration
                 print("loss: {}, [{}/{}]".format(loss, current, size))
                 # print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 

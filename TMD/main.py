@@ -17,7 +17,7 @@ from pytorch import pytorch
 
 def set_deterministic_behavior():
     torch.manual_seed(0)
-    torch.set_deterministic(True)
+    torch.cuda.manual_seed_all(0)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     np.random.seed(0)
@@ -50,6 +50,7 @@ if __name__ == '__main__':
         # evaluation.partial_results_analysis(current_bests, X_test, y_test)
 
         pytorch.run(X.to_numpy(), y_encoded)
+        break
 
     # display cross-validation and testing complete results
     # models_names = [est_name for est_name, _, _ in models]
