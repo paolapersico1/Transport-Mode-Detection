@@ -7,8 +7,10 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from models_config import models
 
+
 def get_rank1_info(result, attribute):
     return result.loc[result['rank_test_score'] == 1][attribute].values[0]
+
 
 def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_models, models_dir):
     best_models = {}
@@ -39,11 +41,13 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
 
     return best_models
 
+
 def run_crossvalidation(X_trainval, y_trainval, clf, params, cv=5, verbose=True):
     params["scaler"] = [StandardScaler(), MinMaxScaler()]
     pipeline = Pipeline([('scaler', StandardScaler()), ('clf', clf)])
 
-    grid_search = GridSearchCV(pipeline, params, cv=cv, verbose=10 if verbose else 0, n_jobs=16, return_train_score=True)
+    grid_search = GridSearchCV(pipeline, params, cv=cv, verbose=10 if verbose else 0, n_jobs=16,
+                               return_train_score=True)
     grid_search.fit(X_trainval, y_trainval)
 
     return pd.DataFrame(grid_search.cv_results_), grid_search.best_estimator_

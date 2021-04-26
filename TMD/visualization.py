@@ -36,7 +36,7 @@ def show_best_cv_models(best_models):
                           'Fit time (s)': ["{:.2f}".format(x) for x in best_models.loc['mean_fit_time']],
                           'Train accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_train_score']],
                           'Val accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_test_score']]})
-    table.set_index('Model', inplace=True, )
+    table.set_index('Model', inplace=True)
     table.sort_values(by=['Val accuracy'], inplace=True, ascending=False)
     print(table)
 
@@ -89,7 +89,7 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
     colors = [hsv_to_rgb(cur, 1, 1) for cur in np.arange(0, 1, step)]
     n_rows = ceil(len(models) / n_cols)
     fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
-    plt.subplots_adjust(wspace = 0.4, hspace=0.3)
+    plt.subplots_adjust(wspace=0.4, hspace=0.3)
     for j, (name, model) in enumerate(models.items()):
         one_hot_encoded_preds = label_binarize(model['pipeline'].predict(X), classes=classes)
         fpr = {}
@@ -105,7 +105,8 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
                 ax = axs[j % n_cols]
             ax.plot(fpr[i], tpr[i], color=color, lw=lw, label='{0} (area = {1:0.2f})'.format(label, roc_auc[i]))
             ax.plot([0, 1], [0, 1], 'k--', lw=lw)
-            ax.set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate', ylabel='True Positive Rate', title=name)
+            ax.set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate', ylabel='True Positive Rate',
+                   title=name)
             ax.legend(loc="lower right")
     fig.suptitle("ROC Curves per Model (Dataset Size: {})".format(X.shape[1]))
 
@@ -113,7 +114,7 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
 def plot_confusion_matrices(models, X, y, n_cols=3):
     n_rows = ceil(len(models) / n_cols)
     fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
-    plt.subplots_adjust(wspace = 0.4, hspace=0.3)
+    plt.subplots_adjust(wspace=0.4, hspace=0.3)
     for i, (name, model) in enumerate(models.items()):
         if n_rows > 1:
             ax = axs[int(i / n_cols), i % n_cols]
@@ -127,7 +128,7 @@ def plot_confusion_matrices(models, X, y, n_cols=3):
 def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
     n_rows = ceil(len(scores_table) / n_cols)
     fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
-    plt.subplots_adjust(wspace = 0.2, hspace=0.4)
+    plt.subplots_adjust(wspace=0.2, hspace=0.4)
     for i, accuracies_table in enumerate(scores_table):
         accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
@@ -139,7 +140,7 @@ def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
             bars = ax.bar(X_axis + 0.2, accuracies_table.loc['final_test_score'], 0.4, label='Test Score')
             for bar in bars:
                 yval = bar.get_height()
-                ax.text(bar.get_x() + 0.1,  yval + 0.01, str(int(yval * 100)) + "%", size='xx-small')
+                ax.text(bar.get_x() + 0.1, yval + 0.01, str(int(yval * 100)) + "%", size='xx-small')
         else:
             ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
             ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
@@ -149,6 +150,7 @@ def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
         ax.set_ylabel("Score")
         ax.legend()
     fig.suptitle(title)
+
 
 def plot_all():
     plt.show()
