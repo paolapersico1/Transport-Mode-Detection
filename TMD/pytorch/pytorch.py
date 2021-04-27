@@ -1,7 +1,8 @@
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-
+from os import path
 import preprocessing
 from pytorch.model_runner import train_loop, test_loop
 import torch
@@ -36,6 +37,7 @@ def run(X, y):
 
     train_subset = Subset(dataset, train_idx)
     val_subset = Subset(dataset, val_idx)
+    test_subset = Subset(dataset, test_idx)
 
     for hidden_size, num_epochs, batch_size, learning_rate in hyperparams:
         print('---------------------------------------------------------------')
@@ -45,20 +47,30 @@ def run(X, y):
             train_subset, batch_size=batch_size, shuffle=False)
         val_loader = DataLoader(
             val_subset, batch_size=1, shuffle=False)
+        test_loader = DataLoader(
+            test_subset, batch_size=1, shuffle=False)
 
         model = Feedforward(
             dataset.X.shape[1], hidden_size, dataset.num_classes)
         model.to(device)
-
         criterion = torch.nn.CrossEntropyLoss()
 
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
-        train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
-        print('Results for hidden_size: {}, num_epochs: {}, batch_size: {}, learning rate: {}'.format(
-            hidden_size, num_epochs, batch_size, learning_rate))
-        name = 'pytorch/{}.{}.{}.{}.csv'.format(hidden_size, num_epochs, batch_size, learning_rate)
-        test_loop(val_loader, model, name, device)
+        name = path.join('pytorch', 'csvs', '{}.{}.{}.{}.csv'.format(hidden_size, num_epochs, batch_size, learning_rate))
+        if path.exists(name):
+            print('Hidden size: {} , Epochs: {} , Batch size: {} , Learning Rate: {}'.format(hidden_size, num_epochs,
+                                                                                             batch_size, learning_rate))
+            print('Val result:')
+            print(pd.read_csv(name))
+            ## TODO laod model and test on test
+            # train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
+            # test_loop(test_loader, model, device)
+        else:
+            train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
+            print('Results for hidden_size: {}, num_epochs: {}, batch_size: {}, learning rate: {}'.format(
+                hidden_size, num_epochs, batch_size, learning_rate))
+            test_loop(val_loader, model, device, name)
 
         # model, loss_values = train_model(
         #     model, criterion, optimizer, num_epochs, train_loader)

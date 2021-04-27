@@ -27,15 +27,14 @@ def train_loop(dataloader, model, loss_fn, optimizer, num_epochs, device):
             loss.backward()
             optimizer.step()
 
-            if iteration % 100 == 0:
-                loss, current = loss.item(), iteration
-                print("loss: {}, [{}/{}]".format(loss, current, size))
-                # print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            # if iteration % 100 == 0:
+            #     loss, current = loss.item(), iteration
+        print("loss: {}".format(loss))
     print('Done')
     print('----------------------------------')
 
 
-def test_loop(dataloader, model, name, device):
+def test_loop(dataloader, model, device, name=None):
     model.eval()
     predictions = []
     actual_labels = []
@@ -54,5 +53,6 @@ def test_loop(dataloader, model, name, device):
     predictions = predictions.argmax(dim=1, keepdim=True).cpu()
     actual_labels.cpu()
     df = pd.DataFrame(classification_report(actual_labels, predictions, output_dict=True)).transpose()
-    df.to_csv(name)
+    if name is not None:
+        df.to_csv(name)
     print(df)
