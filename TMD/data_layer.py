@@ -5,7 +5,6 @@ import numpy as np
 def load_data():
     data = pd.read_csv('dataset/dataset_5secondWindow.csv', index_col=0)
     data = data.iloc[:, 4:-1]
-    # print('data shape: {}'.format(data.shape))
     X = data.iloc[:, :-1]
     y = data['target']
     num_classes = len(np.unique(y))
