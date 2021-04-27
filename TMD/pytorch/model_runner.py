@@ -10,7 +10,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, dev
     print('----------------------------------')
     model.train()
     # size = len(dataloader.dataset)
-    prev_loss = -1
     for epoch in range(num_epochs):
         print("Epoch: {}/{}".format(epoch, num_epochs))
         for batch, (X, y) in enumerate(dataloader):
@@ -33,10 +32,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, dev
             # if iteration % 100 == 0:
             #     loss, current = loss.item(), iteration
         print("loss: {}".format(loss))
-        if loss == prev_loss:
-            break
-        else:
-            prev_loss = loss
     print('Done')
     print('----------------------------------')
 
@@ -50,16 +45,18 @@ def test_loop(dataloader, model, device, name=None):
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(device), y.to(device)
-            a = model(X)
-            predictions.append(a)
+            predictions.append(model(X))
             actual_labels.append(y)
     # matrix of size (size(dataloader.X),k): the higher is the value, the higher is the probability of that class
+
     predictions = torch.stack(predictions).squeeze()
     actual_labels = torch.stack(actual_labels).squeeze().cpu()
     # keep the class with the maximum value
     predictions = predictions.argmax(dim=1, keepdim=True).cpu()
-    actual_labels.cpu()
+    score = torch.sum((predictions.squeeze() == actual_labels).float()) / actual_labels.shape[0]
     df = pd.DataFrame(classification_report(actual_labels, predictions, output_dict=True)).transpose()
     if name is not None:
         df.to_csv(name)
     print(df)
+
+    return score
