@@ -13,7 +13,7 @@ def readable_labels(labels):
 
 
 def get_hyperparam(x, hyperparam):
-    model_hyperparams = x['pipeline'].named_steps.clf.get_params()
+    model_hyperparams = x.named_steps.clf.get_params()
     if hyperparam in model_hyperparams.keys():
         result = model_hyperparams[hyperparam]
     else:
@@ -27,24 +27,24 @@ def show_best_cv_models(best_models):
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.width', None)
 
-    table = pd.DataFrame({'Model': best_models.keys(),
-                          'Pre-processing': [x['pipeline'].named_steps.scaler for x in best_models.values()],
-                          'C': [get_hyperparam(x, "C") for x in best_models.values()],
-                          'gamma': [get_hyperparam(x, "gamma") for x in best_models.values()],
-                          'degree': [get_hyperparam(x, "degree") for x in best_models.values()],
-                          'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.values()],
-                          'Fit time (s)': ["{:.2f}".format(x['mean_fit_time']) for x in best_models.values()],
-                          'Train accuracy': ["{:.2f}".format(x['train_accuracy']) for x in best_models.values()],
-                          'Val accuracy': ["{:.2f}".format(x['val_accuracy']) for x in best_models.values()]})
-    table.set_index('Model', inplace=True, )
+    table = pd.DataFrame({'Model': best_models.columns,
+                          'Pre-processing': [pipeline.named_steps.scaler for pipeline in best_models.loc['pipeline']],
+                          'C': [get_hyperparam(x, "C") for x in best_models.loc['pipeline']],
+                          'gamma': [get_hyperparam(x, "gamma") for x in best_models.loc['pipeline']],
+                          'degree': [get_hyperparam(x, "degree") for x in best_models.loc['pipeline']],
+                          'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.loc['pipeline']],
+                          'Fit time (s)': ["{:.2f}".format(x) for x in best_models.loc['mean_fit_time']],
+                          'Train accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_train_score']],
+                          'Val accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_test_score']]})
+    table.set_index('Model', inplace=True)
     table.sort_values(by=['Val accuracy'], inplace=True, ascending=False)
     print(table)
 
 
 def plot_class_distribution(y):
     distribution = np.unique(y, return_counts=True)
-    count = np.sum(distribution[1])
-    [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
+    # count = np.sum(distribution[1])
+    # [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
     fig, axs = plt.subplots(nrows=1, ncols=2)
     axs[0].bar(x=distribution[0], height=distribution[1])
     axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', )
@@ -58,7 +58,7 @@ def plot_missingvalues_var(X):
     plt.barh(y=x, width=y)
     plt.yticks(x, readable_labels(X.columns), size='xx-small')
     for i, v in enumerate(y):
-        plt.text(v + 1, i + .25, str(int(v)) + "%", color='blue', size='xx-small')
+        plt.text(v + 1, i + .25, str(int(v)) + "%", size='xx-small')
     plt.title("Percentages of missing values for each feature")
 
 
@@ -87,8 +87,9 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
     one_hot_encoded_y = label_binarize(y, classes=classes)
     step = 1.0 / n_classes
     colors = [hsv_to_rgb(cur, 1, 1) for cur in np.arange(0, 1, step)]
-    fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
-    plt.subplots_adjust(hspace=0.25)
+    n_rows = ceil(len(models) / n_cols)
+    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
+    plt.subplots_adjust(wspace=0.4, hspace=0.3)
     for j, (name, model) in enumerate(models.items()):
         one_hot_encoded_preds = label_binarize(model['pipeline'].predict(X), classes=classes)
         fpr = {}
@@ -98,39 +99,56 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
             fpr[i], tpr[i], _ = roc_curve(one_hot_encoded_y[:, i], one_hot_encoded_preds[:, i])
             roc_auc[i] = auc(fpr[i], tpr[i])
         for i, label, color in zip(range(n_classes), classes, colors):
-            axs[int(j / n_cols), j % n_cols].plot(fpr[i], tpr[i], color=color, lw=lw,
-                                                  label='{0} (area = {1:0.2f})'
-                                                        ''.format(label, roc_auc[i]))
-            axs[int(j / n_cols), j % n_cols].plot([0, 1], [0, 1], 'k--', lw=lw)
-            axs[int(j / n_cols), j % n_cols].set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate',
-                                                 ylabel='True Positive Rate', title=name)
-            axs[int(j / n_cols), j % n_cols].legend(loc="lower right")
+            if n_rows > 1:
+                ax = axs[int(j / n_cols), j % n_cols]
+            else:
+                ax = axs[j % n_cols]
+            ax.plot(fpr[i], tpr[i], color=color, lw=lw, label='{0} (area = {1:0.2f})'.format(label, roc_auc[i]))
+            ax.plot([0, 1], [0, 1], 'k--', lw=lw)
+            ax.set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate', ylabel='True Positive Rate',
+                   title=name)
+            ax.legend(loc="lower right")
     fig.suptitle("ROC Curves per Model (Dataset Size: {})".format(X.shape[1]))
 
 
-def plot_confusions(models, X, y, n_cols=3):
-    fig, axs = plt.subplots(nrows=ceil(len(models) / n_cols), ncols=n_cols)
-    plt.subplots_adjust(hspace=0.25)
+def plot_confusion_matrices(models, X, y, n_cols=3):
+    n_rows = ceil(len(models) / n_cols)
+    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
+    plt.subplots_adjust(wspace=0.4, hspace=0.3)
     for i, (name, model) in enumerate(models.items()):
-        plot_confusion_matrix(model['pipeline'], X, y, ax=axs[int(i / n_cols), i % n_cols])
-        axs[int(i / n_cols), i % n_cols].set_title(name)
+        if n_rows > 1:
+            ax = axs[int(i / n_cols), i % n_cols]
+        else:
+            ax = axs[i % n_cols]
+        plot_confusion_matrix(model['pipeline'], X, y, ax=ax)
+        ax.set_title(name)
     fig.suptitle("Confusion Matrices per Model (Dataset Size: {})".format(X.shape[1]))
 
 
-def plot_accuracies(accuracies_table_per_models, n_cols=3, title=""):
-    fig, axs = plt.subplots(nrows=ceil(len(accuracies_table_per_models) / n_cols), ncols=n_cols)
-    plt.subplots_adjust(hspace=0.25)
-    for i, accuracies_table in enumerate(accuracies_table_per_models):
-        accuracies_table = accuracies_table.sort_values(by=['val_accuracy'], ascending=False, axis=1)
+def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
+    n_rows = ceil(len(scores_table) / n_cols)
+    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
+    plt.subplots_adjust(wspace=0.2, hspace=0.4)
+    for i, accuracies_table in enumerate(scores_table):
+        accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
-        axs[int(i / n_cols), i % n_cols].bar(X_axis - 0.2, accuracies_table.loc['train_accuracy'], 0.4,
-                                             label='Train Score')
-        axs[int(i / n_cols), i % n_cols].bar(X_axis + 0.2, accuracies_table.loc['val_accuracy'], 0.4,
-                                             label='Val Score')
-        plt.sca(axs[int(i / n_cols), i % n_cols])
+        if n_rows > 1:
+            ax = axs[int(i / n_cols), i % n_cols]
+        else:
+            ax = axs[i % n_cols]
+        if testing:
+            bars = ax.bar(X_axis + 0.2, accuracies_table.loc['final_test_score'], 0.4, label='Test Score')
+            for bar in bars:
+                yval = bar.get_height()
+                ax.text(bar.get_x() + 0.1, yval + 0.01, str(int(yval * 100)) + "%", size='xx-small')
+        else:
+            ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
+            ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
+
+        plt.sca(ax)
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
-        axs[int(i / n_cols), i % n_cols].set_ylabel("Score")
-        axs[int(i / n_cols), i % n_cols].legend()
+        ax.set_ylabel("Score")
+        ax.legend()
     fig.suptitle(title)
 
 

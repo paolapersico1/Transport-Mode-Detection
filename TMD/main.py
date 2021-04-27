@@ -1,145 +1,58 @@
-from os import makedirs, path
-import visualization
-from joblib import dump, load
-import data_layer
-import model_runner
-from data_layer import load_data
-from sklearn.decomposition import PCA
-from models_params import models
-from sklearn.model_selection import train_test_split
+import warnings
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
 import torch
-from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+
+import evaluation
+import visualization
+import data_layer
+import model_runner
+import preprocessing
+from models_config import models
+
+from pytorch import pytorch
 
 
-def pca_analysis():
-    std_scaler = StandardScaler()
-    smp_imputer = SimpleImputer(strategy="median")
-    pca = PCA()
-    pca.fit(smp_imputer.fit_transform(std_scaler.fit_transform(X)))
-    most_important = [np.abs(pca.components_[i]).argmax() for i in range(X.shape[1])]
-    most_important_names = [X.columns[most_important[i]] for i in range(X.shape[1])]
-    visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
-
-
-def results_analysis(best_estimators, X_test, y_test):
-    visualization.plot_roc_for_all(best_estimators, X_test, y_test, np.unique(y_test))
-    visualization.plot_confusions(best_estimators, X_test, y_test)
+def set_deterministic_behavior():
+    torch.manual_seed(0)
+    torch.cuda.manual_seed_all(0)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    np.random.seed(0)
 
 
 if __name__ == '__main__':
-    torch.manual_seed(0)
-    torch.set_deterministic(True)
-    np.random.seed(0)
-    # true aumenta le performance ma lo rende non-deterministico
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
+    # warnings.filterwarnings("ignore")
+    set_deterministic_behavior()
+
     models_dir = 'saved_models'
-    use_saved_if_available, save_models = True, True
+    use_saved_if_available, save_models = True, False
 
-    if not path.exists(models_dir):
-        print("WARNING: Making not existing folder: {}".format(models_dir))
-        makedirs(models_dir)
+    X, y, num_classes = data_layer.load_data()
+    lenc = LabelEncoder()
+    y_encoded = lenc.fit_transform(y)
+    # preprocessing.priori_analysis(X, y)
+    X_subsets, subsets_sizes = preprocessing.create_datasets(X)
 
-    if not path.exists(path.join(models_dir, "csvs")):
-        print("WARNING: Making not existing folder: {}".format(path.join(models_dir, "csvs")))
-        makedirs(path.join(models_dir, "csvs"))
-
-    X, y, num_classes = load_data()
-
-    pca_analysis()
-
-    visualization.plot_class_distribution(y)
-    visualization.plot_missingvalues_var(X)
-    visualization.boxplot(X)
-
-    visualization.plot_density_all(X)
-
-    visualization.plot_all()
-
-    # train with 64,46,40,16 features
-
-    # dataset without light, gravity, magnetic, pressure, proximity features
-    removable_sensors = ["light", "gravity", "magnetic", "pressure", "proximity"]
-    removable_features = [col for col in X.columns if any(sensor in col for sensor in removable_sensors)]
-
-    # dataset with only gyroscope (calibrated and uncalibrated), accelerometer and sound
-    relevant_sensors = ["gyroscope", "accelerometer", "sound"]
-    removable_features = [col for col in X.columns if all(sensor not in col for sensor in relevant_sensors)]
-
-    X_subsets = [
-        X,  # 64 columns
-        X.dropna(thresh=(0.7 * X.shape[0]), axis=1),  # 46 columns (kept features with less than 30% missing values)
-        X.drop(removable_features, axis=1),  # 40 columns
-        X.drop(removable_features, axis=1)  # 16 columns
-    ]
-    subsets_sizes = ["_" + str(len(df.columns)) for df in X_subsets]
     best_models = {}
+    # for each dataset subset
+    for fs, X in zip(subsets_sizes, X_subsets):
+        # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
+        # X_train, X_test = preprocessing.remove_nan(X_train, X_test)
+        #
+        # current_bests = model_runner.retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_models,
+        #                                                   models_dir)
+        # current_bests = evaluation.add_test_scores(current_bests, X_test, y_test)
+        # best_models.update(current_bests)
+        # # plot roc curve and confusion matrix of each model
+        # evaluation.partial_results_analysis(current_bests, X_test, y_test)
 
-    for fs, X in [(name, df) for (name, df) in zip(subsets_sizes, X_subsets)]:
-        X_trainval, X_test, y_trainval, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
-        X_trainval, imputer = data_layer.preprocess(X_trainval)
-        X_test = imputer.transform(X_test)
+        pytorch.run(X.to_numpy(), y_encoded)
+        break
 
-        for est_name, est, params in models:
-            est_name = est_name + fs
-            file_name = est_name + ".joblib"
+    # display cross-validation and testing complete results
+    # models_names = [est_name for est_name, _, _ in models]
+    # evaluation.results_analysis(best_models, models_names, subsets_sizes)
 
-            if use_saved_if_available and path.exists(path.join(models_dir, file_name)):
-                print("Saved model found: {}".format(est_name))
-                best_models[est_name] = {'pipeline': load(path.join(models_dir, file_name))}
-                result = pd.read_csv(path.join(models_dir, "csvs", est_name + ".csv"))
-            else:
-                result, current_pipeline = model_runner.run_trainval(X_trainval, y_trainval, est, params, cv=10)
-                best_models[est_name] = {'pipeline': current_pipeline}
-                if save_models:
-                    result.to_csv(path.join(models_dir, "csvs", est_name + ".csv"))
-                    dump(best_models[est_name]['pipeline'], path.join(models_dir, file_name))
-
-            best_models[est_name]["train_accuracy"] = \
-                result.loc[result['rank_test_score'] == 1]["mean_train_score"].values[0]
-            best_models[est_name]["val_accuracy"] = \
-                result.loc[result['rank_test_score'] == 1]["mean_test_score"].values[0]
-            best_models[est_name]["mean_fit_time"] = result.loc[result['rank_test_score'] == 1]["mean_fit_time"].values[
-                0]
-        current_bests = {k: v for k, v in best_models.items() if k.endswith(fs)}
-        results_analysis(current_bests, X_test, y_test)
-
-    models_names = [est_name for est_name, _, _ in models]
-    pd_models = pd.DataFrame(best_models)
-    accuracies_table_per_models_names = [pd_models[[col for col in pd_models if col.startswith(name)]] for name in
-                                         models_names]
-    accuracies_table_per_models_sizes = [pd_models[[col for col in pd_models if col.endswith(name)]] for name in
-                                         subsets_sizes]
-    visualization.plot_accuracies(accuracies_table_per_models_names, title='Accuracies per Model')
-    visualization.plot_accuracies(accuracies_table_per_models_sizes, n_cols=2, title='Accuracies per Dataset Size')
-    visualization.plot_all()
-    visualization.show_best_cv_models(best_models)
-
-    # kf = KFold(n_splits=10)
-    # for train_index, val_index in kf.split(X_trainval):
-    #     X_train, X_val, y_train, y_val = X_trainval.iloc[train_index], X_trainval.iloc[val_index],\
-    #                                      y_trainval.iloc[train_index], y_trainval.iloc[val_index]
-    #
-    #     models = [SVM,...]
-    #     methods = ["std", "scaling"]
-    #     scores = np.array((2,5))
-    #
-    #     for i in range(len(methods)):
-    #         X_train, X_val = data_layer.preprocess(X_train, X_val, method=methods[i])
-    #         for j in range(len(models)):
-    #             #scores[i,j] = models[j].train_model(X_train, X_val)
-    #             from sklearn.svm import SVC
-    #
-    #             param_grid = {'C': [0.001, 0.01, 0.1, 1, 10, 100],
-    #                           'gamma': [0.001, 0.01, 0.1, 1, 10, 100]}
-    #
-    #
-    #
-    #
-    #
-    #     break
-
-    # preprocess test set with X_trainval means for missing values
