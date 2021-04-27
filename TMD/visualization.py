@@ -26,13 +26,27 @@ def show_best_cv_models(best_models):
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.width', None)
+    print([x for x in best_models])
 
     table = pd.DataFrame({'Model': best_models.columns,
-                          'Pre-processing': [pipeline.named_steps.scaler for pipeline in best_models.loc['pipeline']],
-                          'C': [get_hyperparam(x, "C") for x in best_models.loc['pipeline']],
-                          'gamma': [get_hyperparam(x, "gamma") for x in best_models.loc['pipeline']],
-                          'degree': [get_hyperparam(x, "degree") for x in best_models.loc['pipeline']],
-                          'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.loc['pipeline']],
+                          'Pre-processing': [x.named_steps.scaler if x != "mlp" else "MinMaxScaler()"
+                                             for x in best_models.loc['pipeline']],
+                          'C': [get_hyperparam(x, "C") if x != "mlp" else "n/a"
+                                for x in best_models.loc['pipeline']],
+                          'gamma': [get_hyperparam(x, "gamma") if x != "mlp" else "n/a"
+                                    for x in best_models.loc['pipeline']],
+                          'degree': [get_hyperparam(x, "degree") if x != "mlp" else "n/a"
+                                     for x in best_models.loc['pipeline']],
+                          'n_estimators': [get_hyperparam(x, "n_estimators") if x != "mlp" else "n/a"
+                                           for x in best_models.loc['pipeline']],
+                          'hidden_size': [best_models[x].loc["hidden_size"] if best_models[x].loc['pipeline'] == "mlp"
+                                          else "n/a" for x in best_models],
+                          'epochs': [best_models[x].loc["epochs"] if best_models[x].loc['pipeline'] == "mlp"
+                                          else "n/a" for x in best_models],
+                          'batch_size': [best_models[x].loc["batch_size"] if best_models[x].loc['pipeline'] == "mlp"
+                                     else "n/a" for x in best_models],
+                          'decay': [best_models[x].loc["decay"] if best_models[x].loc['pipeline'] == "mlp"
+                                     else "n/a" for x in best_models],
                           'Fit time (s)': ["{:.2f}".format(x) for x in best_models.loc['mean_fit_time']],
                           'Train accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_train_score']],
                           'Val accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_test_score']]})

@@ -30,15 +30,29 @@
 
 
 -----------------------------------------------------
-crea estimator custom per drop colonne  P
-
 per training
-	provare senza drop P
+	VV provare senza drop P
 	VV affinare iperparametri J
-	migliorare stampa iperparametri best model P
+	VV migliorare stampa iperparametri best model P
 	VV bar plot accuratezza per ogni best model J
 per testing
 	VV bar plot accuratezza per ogni best model J
-	TD roc curve di ogni best model  J
+	VV TD roc curve di ogni best model  J
 	VV in plot confusion
 		VV disporli a griglia J
+-----------------------------------------------------
+- dropout probability 2 valori P
+- aggiungere learning rate decay  P
+	
+	partiamo da 0.01
+
+	StepLR
+
+- salvare miglior modello validation come file A
+- salvare in current_best_models le info (minmaxscaler(), train accuracy, val accuracy, test accuracy, fit time) P
+- plottare confusion matrix, accuracy varie ed eventualmente roc A
+
+
+- parametri in model_config P
+
+

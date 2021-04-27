@@ -49,10 +49,11 @@ if __name__ == '__main__':
         # # plot roc curve and confusion matrix of each model
         # evaluation.partial_results_analysis(current_bests, X_test, y_test)
 
-        pytorch.run(X.to_numpy(), y_encoded)
-        break
+        best_mlp = pytorch.run(X.to_numpy(), y_encoded)
+        best_models.update(best_mlp)
 
     # display cross-validation and testing complete results
-    # models_names = [est_name for est_name, _, _ in models]
-    # evaluation.results_analysis(best_models, models_names, subsets_sizes)
+    models_names = [est_name for est_name, _, _ in models]
+    models_names.append("mlp")
+    evaluation.results_analysis(best_models, models_names, subsets_sizes)
 
