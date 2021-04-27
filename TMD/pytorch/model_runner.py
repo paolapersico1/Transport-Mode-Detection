@@ -28,8 +28,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, dev
             optimizer.step()
 
         scheduler.step()
-            # if iteration % 100 == 0:
-            #     loss, current = loss.item(), iteration
         print("loss: {}".format(loss))
     print('Done')
     print('----------------------------------')
@@ -54,4 +52,4 @@ def test_loop(dataloader, model, device):
     predictions = predictions.argmax(dim=1, keepdim=True).cpu()
     score = torch.sum((predictions.squeeze() == actual_labels).float()) / actual_labels.shape[0]
 
-    return score
+    return score.numpy()

@@ -11,19 +11,19 @@ class Feedforward(nn.Module):
         dropout = 0.2
 
         self.model = nn.Sequential(
-            # nn.Dropout(dropout),
+            nn.Dropout(dropout),
             nn.Linear(self.input_size, self.hidden_size),
             nn.ReLU(),
             # nn.BatchNorm1d(hidden_size),
-            # nn.Dropout(dropout),
+            nn.Dropout(dropout),
             nn.Linear(self.hidden_size, self.hidden_size),
             nn.ReLU(),
             # nn.BatchNorm1d(hidden_size),
-            # nn.Dropout(dropout),
+            nn.Dropout(dropout),
             nn.Linear(self.hidden_size, self.hidden_size),
             nn.ReLU(),
             # nn.BatchNorm1d(hidden_size),
-            # nn.Dropout(dropout),
+            nn.Dropout(dropout),
             nn.Linear(self.hidden_size, num_classes)
         )
 
