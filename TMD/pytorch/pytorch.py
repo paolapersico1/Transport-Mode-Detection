@@ -13,15 +13,12 @@ import itertools
 
 
 def run(X, y):
-    hidden_sizes = [16, 32, 64]
-    nums_epochs = [100, 250, 350]
-    learning_rate = [0.01, 0.001, 0.0001]
-    batch_sizes = [8, 16, 32]
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Device: {}'.format(device))
 
-    hyperparams = itertools.product(hidden_sizes, nums_epochs, batch_sizes, learning_rate)
+    prefix = path.join('pytorch', 'saved_models')
+    model_file = path.join(prefix, 'NN_{}.torch'.format(X.shape[1]))
+    result_file = path.join(prefix, 'csvs', 'NN_{}.csv'.format(X.shape[1]))
 
     train_idx, test_idx = train_test_split(
         np.arange(len(y)), test_size=0.2, stratify=y, random_state=42)
@@ -35,47 +32,75 @@ def run(X, y):
     X[test_idx] = scaler.transform(X[test_idx])
     dataset = TMDDataset(X, y)
 
-    train_subset = Subset(dataset, train_idx)
-    val_subset = Subset(dataset, val_idx)
-    test_subset = Subset(dataset, test_idx)
-
-    for hidden_size, num_epochs, batch_size, learning_rate in hyperparams:
-        print('---------------------------------------------------------------')
-        print('hidden_size: {}, num_epochs: {}, batch_size: {}, learning rate: {}'.format(
-            hidden_size, num_epochs, batch_size, learning_rate))
-        train_loader = DataLoader(
-            train_subset, batch_size=batch_size, shuffle=False)
-        val_loader = DataLoader(
-            val_subset, batch_size=1, shuffle=False)
-        test_loader = DataLoader(
-            test_subset, batch_size=1, shuffle=False)
-
-        model = Feedforward(
-            dataset.X.shape[1], hidden_size, dataset.num_classes)
+    if path.exists(model_file):
+        result = pd.read_csv(result_file, index_col=0)
+        model = Feedforward(dataset.X.shape[1], result['hidden_size'], dataset.num_classes)
+        model.load_state_dict(torch.load(model_file), strict=False)
         model.to(device)
-        criterion = torch.nn.CrossEntropyLoss()
+        # TODO test on test
+        # test_loop(test_loader, model, device)
+    else:
+        # hidden_sizes = [16, 32, 64]
+        # nums_epochs = [100, 250, 350]
+        # learning_rate = [0.01, 0.001, 0.0001]
+        # batch_sizes = [8, 16, 32]
+        hidden_sizes = [16]
+        nums_epochs = [100]
+        learning_rate = [0.01, 0.001]
+        batch_sizes = [8]
 
-        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+        hyperparams = itertools.product(hidden_sizes, nums_epochs, batch_sizes, learning_rate)
 
-        name = path.join('pytorch', 'csvs', '{}.{}.{}.{}.csv'.format(hidden_size, num_epochs, batch_size, learning_rate))
-        if path.exists(name):
+        train_subset = Subset(dataset, train_idx)
+        val_subset = Subset(dataset, val_idx)
+        test_subset = Subset(dataset, test_idx)
+
+        best_model = None
+        best_result = None
+        best_accuracy = 0
+
+        for hidden_size, num_epochs, batch_size, learning_rate in hyperparams:
+            print('---------------------------------------------------------------')
             print('Hidden size: {} , Epochs: {} , Batch size: {} , Learning Rate: {}'.format(hidden_size, num_epochs,
                                                                                              batch_size, learning_rate))
-            print('Val result:')
-            print(pd.read_csv(name))
-            ## TODO laod model and test on test
-            # train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
-            # test_loop(test_loader, model, device)
-        else:
+            train_loader = DataLoader(
+                train_subset, batch_size=batch_size, shuffle=False)
+
+            val_loader = DataLoader(
+                val_subset, batch_size=1, shuffle=False)
+
             train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
             print('Results for hidden_size: {}, num_epochs: {}, batch_size: {}, learning rate: {}'.format(
                 hidden_size, num_epochs, batch_size, learning_rate))
-            test_loop(val_loader, model, device, name)
+            result = test_loop(val_loader, model, device)
+            # result.to_csv(name)
 
-        # model, loss_values = train_model(
-        #     model, criterion, optimizer, num_epochs, train_loader)
-        # # plt.plot([x.detach().numpy() for x in loss_values])
-        # # plt.title('Depth: {}, Epochs: {}, Batch: {}'.format(
-        # #     hidden_size, num_epochs, batch_size))
-        # # plt.show()
-        # test_model(model, val_loader)
+
+            test_loader = DataLoader(
+                test_subset, batch_size=1, shuffle=False)
+
+            model = Feedforward(
+                dataset.X.shape[1], hidden_size, dataset.num_classes)
+            model.to(device)
+
+            criterion = torch.nn.CrossEntropyLoss()
+
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+            if result.loc['accuracy'][0] > best_accuracy:
+                best_model = model
+                best_result = result
+                best_accuracy = result.loc['accuracy'][0]
+            print(result)
+            # model, loss_values = train_model(
+            #     model, criterion, optimizer, num_epochs, train_loader)
+            # # plt.plot([x.detach().numpy() for x in loss_values])
+            # # plt.title('Depth: {}, Epochs: {}, Batch: {}'.format(
+            # #     hidden_size, num_epochs, batch_size))
+            # # plt.show()
+            # test_model(model, val_loader)
+        torch.save(best_model.state_dict(), path.join('pytorch', 'saved_models', 'NN_{}.torch'.format(X.shape[1])))
+        best_result.to_csv(path.join('pytorch', 'saved_models', 'csvs', 'NN_{}.csv'.format(X.shape[1])))
+        print("BEST:")
+        print(best_accuracy)
+        print(best_result)

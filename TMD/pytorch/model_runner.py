@@ -22,7 +22,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, num_epochs, device):
             if math.isnan(loss.item()):
                 print('Nan detected')
                 print(pred, y)
-                exit()
 
             loss.backward()
             optimizer.step()
@@ -34,7 +33,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, num_epochs, device):
     print('----------------------------------')
 
 
-def test_loop(dataloader, model, device, name=None):
+def test_loop(dataloader, model, device):
     model.eval()
     predictions = []
     actual_labels = []
@@ -53,6 +52,6 @@ def test_loop(dataloader, model, device, name=None):
     predictions = predictions.argmax(dim=1, keepdim=True).cpu()
     actual_labels.cpu()
     df = pd.DataFrame(classification_report(actual_labels, predictions, output_dict=True)).transpose()
-    if name is not None:
-        df.to_csv(name)
-    print(df)
+    # if name is not None:
+    #     df.to_csv(name)
+    return accuracy
