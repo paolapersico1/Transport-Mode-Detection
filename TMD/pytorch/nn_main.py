@@ -12,12 +12,12 @@ from torch.utils.data import DataLoader, Subset
 import itertools
 import time
 
-def run(X, y):
 
-    hidden_sizes = [64, 32, 16]
-    nums_epochs = [350, 250, 100]
-    batch_sizes = [64, 32, 16]
-    gamma = [0.05, 0.1]
+def run(X, y):
+    hidden_sizes = [64, 50, 32, 16]
+    nums_epochs = [500, 400, 250, 100]
+    batch_sizes = [32, 64, 128, 256]
+    gamma = [0.01, 0.03, 0.05, 0.08]
     learning_rate = 0.1
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -51,7 +51,10 @@ def run(X, y):
         for hidden_size, num_epochs, batch_size, gamma in hyperparams:
             print('---------------------------------------------------------------')
             print('Dataset size: {}, hidden_size: {}, num_epochs: {}, batch_size: {}, gamma: {}'.format(fs,
-                hidden_size, num_epochs, batch_size, gamma))
+                                                                                                        hidden_size,
+                                                                                                        num_epochs,
+                                                                                                        batch_size,
+                                                                                                        gamma))
             train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=False)
             val_loader = DataLoader(val_subset, batch_size=1, shuffle=False)
             test_loader = DataLoader(test_subset, batch_size=1, shuffle=False)
@@ -60,28 +63,32 @@ def run(X, y):
             model.to(device)
             criterion = torch.nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=gamma)
+            lambda1 = lambda epoch: 1 / (1 + gamma * epoch)
+            scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
 
             time_before = time.time()
             train_loop(train_loader, model, criterion, optimizer, scheduler, num_epochs, device)
             time_after = time.time() - time_before
-            print('Results for dataset size: {}, hidden_size: {}, num_epochs: {}, batch_size: {}, gamma: {}'.format(fs,
-                hidden_size, num_epochs, batch_size, gamma))
 
             train_score = test_loop(DataLoader(train_subset, batch_size=1, shuffle=False), model, device)
             val_score = test_loop(val_loader, model, device)
             test_score = test_loop(test_loader, model, device)
 
+            print('Dataset size: {}, hidden_size: {}, num_epochs: {}, batch_size: {}, gamma: {}'.format(
+                    fs, hidden_size, num_epochs, batch_size, gamma))
+            print("Train accuracy: {}".format(train_score))
+            print("Validation accuracy: {}".format(val_score))
+
             if val_score > best_val_score:
-                best_model = {"NN_"+str(fs) : {"pipeline": "mlp",
-                                            "hidden_size": hidden_size,
-                                            "epochs": num_epochs,
-                                            "batch_size": batch_size,
-                                            "decay": gamma,
-                                            "mean_train_score" : train_score,
-                                            "mean_test_score" : val_score,
-                                            "mean_fit_time" : time_after,
-                                            "final_test_score" : test_score}}
+                best_model = {"NN_" + str(fs): {"pipeline": "mlp",
+                                                "hidden_size": hidden_size,
+                                                "epochs": num_epochs,
+                                                "batch_size": batch_size,
+                                                "decay": gamma,
+                                                "mean_train_score": train_score,
+                                                "mean_test_score": val_score,
+                                                "mean_fit_time": time_after,
+                                                "final_test_score": test_score}}
                 best_val_score = val_score
                 best_nn = model
 

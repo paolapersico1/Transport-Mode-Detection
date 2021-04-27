@@ -12,7 +12,7 @@ import model_runner
 import preprocessing
 from models_config import models
 
-from pytorch import pytorch
+from pytorch import nn_main
 
 
 def set_deterministic_behavior():
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         # # plot roc curve and confusion matrix of each model
         # evaluation.partial_results_analysis(current_bests, X_test, y_test)
 
-        best_mlp = pytorch.run(X.to_numpy(), y_encoded)
+        best_mlp = nn_main.run(X.to_numpy(), y_encoded)
         best_models.update(best_mlp)
 
     # display cross-validation and testing complete results
