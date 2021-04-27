@@ -15,13 +15,14 @@ import itertools
 def run(X, y):
     hidden_sizes = [16, 32, 64]
     nums_epochs = [100, 250, 350]
-    learning_rate = [0.01, 0.001, 0.0001]
     batch_sizes = [8, 16, 32]
+    gamma = [0.1, 0.5, 1]
+    learning_rate = 0.01
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Device: {}'.format(device))
 
-    hyperparams = itertools.product(hidden_sizes, nums_epochs, batch_sizes, learning_rate)
+    hyperparams = itertools.product(hidden_sizes, nums_epochs, batch_sizes, gamma)
 
     train_idx, test_idx = train_test_split(
         np.arange(len(y)), test_size=0.2, stratify=y, random_state=42)
@@ -39,10 +40,10 @@ def run(X, y):
     val_subset = Subset(dataset, val_idx)
     test_subset = Subset(dataset, test_idx)
 
-    for hidden_size, num_epochs, batch_size, learning_rate in hyperparams:
+    for hidden_size, num_epochs, batch_size, gamma in hyperparams:
         print('---------------------------------------------------------------')
-        print('hidden_size: {}, num_epochs: {}, batch_size: {}, learning rate: {}'.format(
-            hidden_size, num_epochs, batch_size, learning_rate))
+        print('hidden_size: {}, num_epochs: {}, batch_size: {}, gamma: {}'.format(
+            hidden_size, num_epochs, batch_size, gamma))
         train_loader = DataLoader(
             train_subset, batch_size=batch_size, shuffle=False)
         val_loader = DataLoader(
@@ -56,21 +57,22 @@ def run(X, y):
         criterion = torch.nn.CrossEntropyLoss()
 
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=gamma)
 
-        name = path.join('pytorch', 'csvs', '{}.{}.{}.{}.csv'.format(hidden_size, num_epochs, batch_size, learning_rate))
-        if path.exists(name):
-            print('Hidden size: {} , Epochs: {} , Batch size: {} , Learning Rate: {}'.format(hidden_size, num_epochs,
-                                                                                             batch_size, learning_rate))
-            print('Val result:')
-            print(pd.read_csv(name))
-            ## TODO laod model and test on test
-            # train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
-            # test_loop(test_loader, model, device)
-        else:
-            train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
-            print('Results for hidden_size: {}, num_epochs: {}, batch_size: {}, learning rate: {}'.format(
-                hidden_size, num_epochs, batch_size, learning_rate))
-            test_loop(val_loader, model, device, name)
+        # name = path.join('pytorch', 'csvs', '{}.{}.{}.{}.csv'.format(hidden_size, num_epochs, batch_size, gamma))
+        # if path.exists(name):
+        #     print('Hidden size: {} , Epochs: {} , Batch size: {} , Gamma: {}'.format(hidden_size, num_epochs,
+        #                                                                                      batch_size, gamma))
+        #     print('Val result:')
+        #     print(pd.read_csv(name))
+        #     ## TODO laod model and test on test
+        #     # train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
+        #     # test_loop(test_loader, model, device)
+        # else:
+        train_loop(train_loader, model, criterion, optimizer, scheduler, num_epochs, device)
+        # print('Results for hidden_size: {}, num_epochs: {}, batch_size: {}, gamma: {}'.format(
+        #     hidden_size, num_epochs, batch_size, gamma))
+        # test_loop(val_loader, model, device, name)
 
         # model, loss_values = train_model(
         #     model, criterion, optimizer, num_epochs, train_loader)

@@ -2,17 +2,19 @@ import math
 
 import pandas as pd
 import torch
+from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report
 
 
-def train_loop(dataloader, model, loss_fn, optimizer, num_epochs, device):
+def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, device):
     print('----------------------------------')
     model.train()
-    size = len(dataloader.dataset)
+    # size = len(dataloader.dataset)
+    prev_loss = -1
     for epoch in range(num_epochs):
         print("Epoch: {}/{}".format(epoch, num_epochs))
         for batch, (X, y) in enumerate(dataloader):
-            iteration = batch * len(X)
+            # iteration = batch * len(X)
             X, y = X.to(device), y.to(device)
             optimizer.zero_grad()
 
@@ -27,9 +29,14 @@ def train_loop(dataloader, model, loss_fn, optimizer, num_epochs, device):
             loss.backward()
             optimizer.step()
 
+        scheduler.step()
             # if iteration % 100 == 0:
             #     loss, current = loss.item(), iteration
         print("loss: {}".format(loss))
+        if loss == prev_loss:
+            break
+        else:
+            prev_loss = loss
     print('Done')
     print('----------------------------------')
 
