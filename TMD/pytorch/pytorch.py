@@ -12,9 +12,9 @@ import itertools
 
 
 def run(X, y):
-    hidden_sizes = [64]
-    nums_epochs = [100]
-    learning_rate = [0.001]
+    hidden_sizes = [16, 32, 64]
+    nums_epochs = [100, 250, 350]
+    learning_rate = [0.01, 0.001, 0.0001]
     batch_sizes = [8, 16, 32]
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -55,7 +55,10 @@ def run(X, y):
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
         train_loop(train_loader, model, criterion, optimizer, num_epochs, device)
-        test_loop(val_loader, model, device)
+        print('Results for hidden_size: {}, num_epochs: {}, batch_size: {}, learning rate: {}'.format(
+            hidden_size, num_epochs, batch_size, learning_rate))
+        name = 'pytorch/{}.{}.{}.{}.csv'.format(hidden_size, num_epochs, batch_size, learning_rate)
+        test_loop(val_loader, model, name, device)
 
         # model, loss_values = train_model(
         #     model, criterion, optimizer, num_epochs, train_loader)
