@@ -1,5 +1,5 @@
 from joblib import dump, load
-from os import makedirs, path
+from os import path
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -28,11 +28,6 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
             result, current_pipeline = run_crossvalidation(X_train, y_train, est, params, cv=10)
             best_models[est_name] = {'pipeline': current_pipeline}
             if save_models:
-                if not path.exists(models_dir):
-                    print("WARNING: Making not existing folder: {}".format(models_dir))
-                    makedirs(models_dir)
-                    makedirs(path.join(models_dir, "csvs"))
-
                 dump(best_models[est_name]['pipeline'], path.join(models_dir, file_name))
                 result.to_csv(path.join(models_dir, "csvs", est_name + ".csv"))
 

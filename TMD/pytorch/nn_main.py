@@ -13,7 +13,7 @@ import itertools
 import time
 
 
-def run(X, y):
+def run(X, y, nn_models_dir):
     hidden_sizes = [64, 50, 32, 16]
     nums_epochs = [500, 400, 250, 100]
     batch_sizes = [32, 64, 128, 256]
@@ -24,9 +24,8 @@ def run(X, y):
     print('Device: {}'.format(device))
     fs = X.shape[1]
 
-    prefix = path.join('pytorch', 'saved_models')
-    model_file = path.join(prefix, 'NN_{}.torch'.format(fs))
-    result_file = path.join(prefix, 'csvs', 'NN_{}.csv'.format(fs))
+    model_file = path.join(nn_models_dir, 'NN_{}.torch'.format(fs))
+    result_file = path.join(nn_models_dir, 'csvs', 'NN_{}.csv'.format(fs))
 
     hyperparams = itertools.product(hidden_sizes, nums_epochs, batch_sizes, gamma)
 
