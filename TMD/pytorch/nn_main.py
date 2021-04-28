@@ -13,7 +13,7 @@ import itertools
 import time
 
 
-def run(X, y, nn_models_dir):
+def run(X, y, nn_models_dir, use_saved_if_available, save_models):
     hidden_sizes = [64, 50, 32, 16]
     nums_epochs = [500, 400, 250, 100]
     batch_sizes = [32, 64, 128, 256]
@@ -21,7 +21,7 @@ def run(X, y, nn_models_dir):
     learning_rate = 0.1
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print('Device: {}'.format(device))
+    # print('Device: {}'.format(device))
     fs = X.shape[1]
 
     model_file = path.join(nn_models_dir, 'NN_{}.torch'.format(fs))
@@ -46,7 +46,7 @@ def run(X, y, nn_models_dir):
 
     best_val_score = 0
 
-    if not path.exists(model_file):
+    if not use_saved_if_available or not path.exists(model_file):
         for hidden_size, num_epochs, batch_size, gamma in hyperparams:
             print('---------------------------------------------------------------')
             print('Dataset size: {}, hidden_size: {}, num_epochs: {}, batch_size: {}, gamma: {}'.format(fs,
@@ -90,11 +90,12 @@ def run(X, y, nn_models_dir):
                                                 "final_test_score": test_score}}
                 best_val_score = val_score
                 best_nn = model
-
-        pd.DataFrame(best_model).transpose().to_csv(result_file)
-        torch.save(best_nn.state_dict(), model_file)
+        if save_models:
+            pd.DataFrame(best_model).transpose().to_csv(result_file)
+            torch.save(best_nn.state_dict(), model_file)
 
     else:
+        print("Saved model found: {}".format("NN_" + str(fs)))
         result = pd.read_csv(result_file, index_col=0)
         model = Feedforward(dataset.X.shape[1], result['hidden_size'][0], dataset.num_classes)
         model.load_state_dict(torch.load(model_file), strict=False)
