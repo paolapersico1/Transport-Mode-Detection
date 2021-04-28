@@ -142,9 +142,10 @@ def plot_confusion_matrices(models, X, y, n_cols=3):
 def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
     n_rows = ceil(len(scores_table) / n_cols)
     fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
-    plt.subplots_adjust(wspace=0.2, hspace=0.4)
+    plt.subplots_adjust(wspace=0.2, hspace=0.5)
     for i, accuracies_table in enumerate(scores_table):
-        accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
+        accuracies_table = accuracies_table.sort_values(by=['final_test_score' if testing else 'mean_test_score'],
+                                                        ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
         if n_rows > 1:
             ax = axs[int(i / n_cols), i % n_cols]

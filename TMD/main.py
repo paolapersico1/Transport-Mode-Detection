@@ -66,6 +66,6 @@ if __name__ == '__main__':
 
     #display cross-validation and testing complete results
     models_names = [est_name for est_name, _, _ in models]
-    models_names.append("mlp")
+    models_names.append("NN")
     evaluation.results_analysis(best_models, models_names, subsets_sizes)
 
