@@ -59,7 +59,7 @@ if __name__ == '__main__':
         current_bests = evaluation.add_test_scores(current_bests, X_test, y_test)
         best_models.update(current_bests)
         # plot roc curve and confusion matrix of each model
-        # evaluation.partial_results_analysis(current_bests, X_test, y_test)
+        evaluation.partial_results_analysis(current_bests, X_test, y_test)
 
         best_mlp = nn_main.run(X.to_numpy(), y_encoded, nn_models_dir, use_saved_if_available, save_models)
         best_models.update(best_mlp)

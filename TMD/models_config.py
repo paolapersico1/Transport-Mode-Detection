@@ -63,8 +63,7 @@ models = [
         {
             'scaler': [StandardScaler(), MinMaxScaler()],
             # 'clf__criterion': ['gini', 'entropy'] # since gini works well, we don't need to check entropy
-            # 'clf__n_estimators': [10, 20, 50, 100, 200, 300]
-            'clf__n_estimators': [200]
+            'clf__n_estimators': [10, 20, 50, 100, 200, 300]
         }
     )
 ]
