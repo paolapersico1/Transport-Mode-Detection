@@ -23,7 +23,6 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
             print("Saved model found: {}".format(est_name))
             best_models[est_name] = {'pipeline': load(path.join(models_dir, file_name))}
             result = pd.read_csv(path.join(models_dir, "csvs", est_name + ".csv"))
-
         else:
             result, current_pipeline = run_crossvalidation(X_train, y_train, est, params, cv=10)
             best_models[est_name] = {'pipeline': current_pipeline}
@@ -34,6 +33,15 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
         attributes = ["mean_train_score", "mean_test_score", "mean_fit_time"]
         for attribute in attributes:
             best_models[est_name][attribute] = get_rank1_info(result, attribute)
+
+    best_svc = None
+    best_svc_acc = 0
+    for k, v in best_models.items():
+        if k.startswith('svc') and v['mean_test_score'] > best_svc_acc:
+            best_svc = best_models[k]
+            best_svc_acc = v['mean_test_score']
+    [best_models.pop(k) for k in [k for k in best_models.keys() if k.startswith('svc')]]
+    best_models.update({'svc_' + str(fs): best_svc})
 
     return best_models
 

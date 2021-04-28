@@ -61,11 +61,12 @@ if __name__ == '__main__':
         # plot roc curve and confusion matrix of each model
         # evaluation.partial_results_analysis(current_bests, X_test, y_test)
 
-        best_mlp = nn_main.run(X.to_numpy(), y_encoded, nn_models_dir, use_saved_if_available, save_models)
-        best_models.update(best_mlp)
+        # best_mlp = nn_main.run(X.to_numpy(), y_encoded, nn_models_dir, use_saved_if_available, True)
+        # best_models.update(best_mlp)
 
-    #display cross-validation and testing complete results
-    models_names = [est_name for est_name, _, _ in models]
-    models_names.append("NN")
+    # display cross-validation and testing complete results
+    models_names = [est_name for est_name, _, _ in models if 'svc' not in est_name]
+    models_names.append('svc')
+    # models_names.append("NN")
     evaluation.results_analysis(best_models, models_names, subsets_sizes)
 

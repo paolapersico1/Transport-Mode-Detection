@@ -4,8 +4,8 @@ import visualization
 
 
 def partial_results_analysis(models, X_test, y_test):
-    visualization.plot_roc_for_all(models, X_test, y_test, np.unique(y_test))
-    visualization.plot_confusion_matrices(models, X_test, y_test)
+    visualization.plot_roc_for_all(models, X_test, y_test, np.unique(y_test), n_cols=2)
+    visualization.plot_confusion_matrices(models, X_test, y_test, n_cols=2)
     visualization.plot_all()
 
 
@@ -15,7 +15,7 @@ def results_analysis(best_models, models_names, subsets_sizes):
 
     scores_table_per_model = [pd_models[[col for col in pd_models if col.startswith(name)]] for name in models_names]
     scores_table_per_dataset = [pd_models[[col for col in pd_models if col.endswith(fs)]] for fs in subsets_sizes]
-    visualization.plot_accuracies(scores_table_per_model, title='Cross-validation accuracies per Model')
+    visualization.plot_accuracies(scores_table_per_model, n_cols=2, title='Cross-validation accuracies per Model')
     visualization.plot_accuracies(scores_table_per_dataset, n_cols=2, title='Cross-validation accuracies per Dataset')
     visualization.plot_accuracies(scores_table_per_dataset, n_cols=2, title='Testing accuracies per Dataset',
                                   testing=True)

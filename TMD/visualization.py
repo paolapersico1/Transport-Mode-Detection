@@ -161,6 +161,7 @@ def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
             ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
 
         plt.sca(ax)
+        plt.ylim(0, 1.1)
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
         ax.set_ylabel("Score")
         ax.legend()
