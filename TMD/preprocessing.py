@@ -32,7 +32,8 @@ def priori_analysis(X, y):
 
     missing_values = [x * 100 / len(X) for x in X.isna().sum()]
     missing_values_series = pd.Series(missing_values, index=X.columns)
-    visualization.plot_features_info(missing_values_series, 'Missing values (%)', "Features missing values")
+    visualization.plot_features_info(missing_values_series, operation=np.mean, xlabel='Missing values (%)',
+                                     title="Features missing values")
 
     visualization.plot_density_all(X)
     visualization.plot_all()

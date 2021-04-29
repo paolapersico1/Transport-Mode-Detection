@@ -75,10 +75,11 @@ def plot_class_distribution(y):
     axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', )
     fig.suptitle("Number of samples for each class")
 
-def plot_features_info(series, xlabel, title):
+def plot_features_info(series, xlabel, title, operation=np.sum,):
     df = group_sensor_features(series)
     df.plot.barh()
     plt.xlabel(xlabel)
+    plt.yticks(np.arange(df.shape[0]), labels=["{} ({}%)".format(index, str(round(operation(df.loc[index])))) for index in df.index])
     plt.ylabel("Sensors")
     plt.title(title)
 
@@ -159,8 +160,12 @@ def plot_accuracies(scores_table, n_cols=3, title=""):
             ax = axs[i % n_cols]
 
         ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
+        # for p in ax.patches:
+        #     ax.annotate(str(int(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
         ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
-        ax.legend()
+        for p in ax.patches:
+            ax.annotate(str(round(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
+        ax.legend(loc='lower right')
         plt.sca(ax)
         plt.ylim(0, 1.1)
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
@@ -175,9 +180,9 @@ def group_models(series, models_names, subsets_sizes):
 
 def plot_testing_accuracy(scores_table, models_names, subsets_sizes):
     df = group_models(scores_table, models_names, subsets_sizes)
-    ax = df.plot.bar()
+    ax = df.plot.bar(rot=0)
     for p in ax.patches:
-        ax.annotate(str(int(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
+        ax.annotate(str(round(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
     plt.title('Testing accuracies per Dataset')
 
 
