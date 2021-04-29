@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from os import path
 import preprocessing
+import visualization
 from pytorch.model_runner import train_loop, test_loop
 import torch
 from pytorch.model import Feedforward
@@ -14,6 +15,7 @@ import time
 
 
 def run(X, y, nn_models_dir, use_saved_if_available, save_models):
+    force_train = True
     hidden_sizes = [64, 50, 32, 16]
     nums_epochs = [500, 400, 250, 100]
     batch_sizes = [32, 64, 128, 256]
@@ -66,7 +68,10 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
 
             time_before = time.time()
-            train_loop(train_loader, model, criterion, optimizer, scheduler, num_epochs, device)
+            losses = train_loop(train_loader, model, criterion, optimizer, scheduler, num_epochs, device)
+            visualization.plot_loss(losses, fs)
+            # visualization.plot_all()
+
             time_after = time.time() - time_before
 
             train_score = test_loop(DataLoader(train_subset, batch_size=1, shuffle=False), model, device)
@@ -74,7 +79,7 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             test_score = test_loop(test_loader, model, device)
 
             print('Dataset size: {}, hidden_size: {}, num_epochs: {}, batch_size: {}, gamma: {}'.format(
-                    fs, hidden_size, num_epochs, batch_size, gamma))
+                fs, hidden_size, num_epochs, batch_size, gamma))
             print("Train accuracy: {}".format(train_score))
             print("Validation accuracy: {}".format(val_score))
 
@@ -95,11 +100,23 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             torch.save(best_nn.state_dict(), model_file)
 
     else:
-        print("Saved model found: {}".format("NN_" + str(fs)))
+        print("Saved model found: NN_{}".format(fs))
         result = pd.read_csv(result_file, index_col=0)
         model = Feedforward(dataset.X.shape[1], result['hidden_size'][0], dataset.num_classes)
-        model.load_state_dict(torch.load(model_file), strict=False)
-        model.to(device)
+        if force_train:
+            model.to(device)
+            train_loader = DataLoader(train_subset, batch_size=int(result['batch_size'][0]), shuffle=False)
+            criterion = torch.nn.CrossEntropyLoss()
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+            lambda1 = lambda epoch: 1 / (1 + result['decay'][0] * epoch)
+            scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
+
+            losses = train_loop(train_loader, model, criterion, optimizer, scheduler, result['epochs'][0], device)
+            visualization.plot_loss(losses)
+            # visualization.plot_all()
+        else:
+            model.load_state_dict(torch.load(model_file), strict=False)
+            model.to(device)
         best_model = result.transpose().to_dict()
 
     return best_model

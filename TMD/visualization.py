@@ -24,6 +24,7 @@ def get_hyperparam(x, hyperparam):
         result = "n/a"
     return result
 
+
 def group_sensor_features(series):
     sensors = np.unique(readable_labels(series.index, removePrefix=False, removeSuffix=True))
     data = [[series[sensor + "#min"], series[sensor + "#max"], series[sensor + "#mean"],
@@ -53,11 +54,11 @@ def show_best_cv_models(best_models):
                           'hidden_size': [best_models[x].loc["hidden_size"] if best_models[x].loc['pipeline'] == "mlp"
                                           else "n/a" for x in best_models],
                           'epochs': [best_models[x].loc["epochs"] if best_models[x].loc['pipeline'] == "mlp"
-                                          else "n/a" for x in best_models],
+                                     else "n/a" for x in best_models],
                           'batch_size': [best_models[x].loc["batch_size"] if best_models[x].loc['pipeline'] == "mlp"
-                                     else "n/a" for x in best_models],
+                                         else "n/a" for x in best_models],
                           'decay': [best_models[x].loc["decay"] if best_models[x].loc['pipeline'] == "mlp"
-                                     else "n/a" for x in best_models],
+                                    else "n/a" for x in best_models],
                           'Fit time (s)': ["{:.2f}".format(x) for x in best_models.loc['mean_fit_time']],
                           'Train accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_train_score']],
                           'Val accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_test_score']]})
@@ -72,11 +73,20 @@ def plot_class_distribution(y):
     # [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
     fig, axs = plt.subplots(nrows=1, ncols=2)
     colors = ["red", "yellow", "blue", "green", "orange"]
+    step = 1.0 / len(distribution[0])
+    colors = [hsv_to_rgb(cur, 0.9, 1) for cur in np.arange(0, 1, step)]
     axs[0].bar(x=distribution[0], height=distribution[1], color=colors)
     axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', colors=colors)
     fig.suptitle("Number of samples for each class")
 
-def plot_features_info(series, xlabel, title, operation=np.sum,):
+
+def plot_loss(losses, fs):
+    plt.figure()
+    plt.plot(losses)
+    plt.title("Loss (Dataset size: {})".format(fs))
+
+
+def plot_features_info(series, xlabel, title, operation=np.sum):
     df = group_sensor_features(series)
     ax = df.plot.barh()
     pos1 = ax.get_position()
@@ -96,14 +106,6 @@ def plot_density_all(X, n_measures=4):
         axs[int(i / n_measures), 0].set_ylabel(cols[i].split('#')[0], rotation='horizontal', ha='right')
         axs[0, i % n_measures].set_title(cols[i].split('#')[1])
     fig.suptitle("Distribution per sensor")
-
-
-def plot_explained_variance(labels, y):
-    plt.figure()
-    x = range(1, len(labels) + 1)
-    plt.barh(x, width=y)
-    plt.yticks(x, readable_labels(labels), size='xx-small')
-    plt.title("Explained variance for each variable")
 
 
 def plot_roc_for_all(models, X, y, classes, n_cols=3):
@@ -173,11 +175,13 @@ def plot_accuracies(scores_table, n_cols=3, title=""):
         ax.set_ylabel("Score")
     fig.suptitle(title)
 
+
 def group_models(series, models_names, subsets_sizes):
     data = [[series[model_name + fs] for fs in subsets_sizes] for model_name in models_names]
     col = [s[1:] + " features" for s in subsets_sizes]
     df = pd.DataFrame(data, columns=col, index=models_names)
     return df
+
 
 def plot_testing_accuracy(scores_table, models_names, subsets_sizes):
     df = group_models(scores_table, models_names, subsets_sizes)

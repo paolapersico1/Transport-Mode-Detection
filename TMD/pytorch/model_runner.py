@@ -9,6 +9,7 @@ from sklearn.metrics import classification_report
 def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, device):
     print('----------------------------------')
     model.train()
+    losses = []
     # size = len(dataloader.dataset)
     for epoch in range(num_epochs):
         print("Epoch: {}/{}".format(epoch, num_epochs))
@@ -28,9 +29,11 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, dev
             optimizer.step()
 
         scheduler.step()
+        losses.append(loss.item())
         print("loss: {}".format(loss))
     print('Done')
     print('----------------------------------')
+    return losses
 
 
 def test_loop(dataloader, model, device):
