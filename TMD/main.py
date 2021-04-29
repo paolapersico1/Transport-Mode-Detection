@@ -45,7 +45,7 @@ if __name__ == '__main__':
     X, y, num_classes = data_layer.load_data()
     lenc = LabelEncoder()
     y_encoded = lenc.fit_transform(y)
-    # preprocessing.priori_analysis(X, y)
+    preprocessing.priori_analysis(X, y)
     X_subsets, subsets_sizes = preprocessing.create_datasets(X)
 
     best_models = {}
