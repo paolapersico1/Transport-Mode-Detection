@@ -6,19 +6,18 @@ from os import path
 from string import digits
 
 
-def partial_results_analysis(models, X_test, y_test):
+def partial_results_analysis(models, X_test, y_test, X_cols):
     visualization.plot_roc_for_all(models, X_test, y_test, np.unique(y_test), n_cols=2)
     visualization.plot_confusion_matrices(models, X_test, y_test, n_cols=2)
+    rf = models["random_forest_" + str(len(X_cols))]["pipeline"].named_steps.clf
+    rankVar = pd.Series(rf.feature_importances_ * 100, index=X_cols).sort_values(ascending=False)
+    visualization.plot_features_info(rankVar, xlabel='Importance Score (%)', title="Features Importance")
     visualization.plot_all()
 
 
-def results_analysis(best_models, subsets_sizes, X_col, models_dir):
+def results_analysis(best_models, subsets_sizes):
     pd_models = pd.DataFrame(best_models)
     visualization.show_best_cv_models(pd_models)
-
-    pipeline = load(path.join(models_dir, 'random_forest_' + str(len(X_col)) + '.joblib'))
-    rankVar = pd.Series(pipeline.named_steps.clf.feature_importances_ * 100, index=X_col).sort_values(ascending=False)
-    visualization.plot_features_info(rankVar, xlabel='Importance Score (%)', title="Features Importance")
 
     models_names = pd.unique([name.translate({ord(k): None for k in digits})[:-1] for name in pd_models.columns])
     scores_table_per_model = [pd_models[[col for col in pd_models if col.startswith(name)]] for name in models_names]
