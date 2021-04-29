@@ -77,7 +77,9 @@ def plot_class_distribution(y):
 
 def plot_features_info(series, xlabel, title, operation=np.sum,):
     df = group_sensor_features(series)
-    df.plot.barh()
+    ax = df.plot.barh()
+    pos1 = ax.get_position()  # get the original position
+    ax.set_position([pos1.x0 + 0.06, pos1.y0, pos1.width, pos1.height])  # set a new position
     plt.xlabel(xlabel)
     plt.yticks(np.arange(df.shape[0]), labels=["{} ({}%)".format(index, str(round(operation(df.loc[index])))) for index in df.index])
     plt.ylabel("Sensors")
