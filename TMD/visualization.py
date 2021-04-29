@@ -27,8 +27,8 @@ def get_hyperparam(x, hyperparam):
 
 def group_sensor_features(series):
     sensors = np.unique(readable_labels(series.index, removePrefix=False, removeSuffix=True))
-    data = [[series[sensor + "#min"], series[sensor + "#max"], series[sensor + "#mean"],
-             series[sensor + "#std"]] for sensor in sensors]
+    data = [[series.get(sensor + "#min", 0), series.get(sensor + "#max", 0), series.get(sensor + "#mean", 0),
+             series.get(sensor + "#std", 0)] for sensor in sensors]
     df = pd.DataFrame(data, columns=["Min", "Max", "Mean", "Std"], index=readable_labels(sensors))
     return df
 
