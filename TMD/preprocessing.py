@@ -1,9 +1,8 @@
 import numpy as np
-from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
 
 import visualization
+import pandas as pd
 
 
 def remove_nan(X_train, X_test=None):
@@ -14,22 +13,15 @@ def remove_nan(X_train, X_test=None):
 
     return X_train, X_test
 
-def pca_analysis(X):
-    #fit PCA on standardized dataset without missing values
-    std_scaler = StandardScaler()
-    pca = PCA()
-    pca.fit(remove_nan(std_scaler.fit_transform(X))[0])
-    #get most important components names
-    most_important = [np.abs(pca.components_[i]).argmax() for i in range(X.shape[1])]
-    most_important_names = [X.columns[most_important[i]] for i in range(X.shape[1])]
-    #plot the explained variance of each component
-    visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
 
 def priori_analysis(X, y):
-    pca_analysis(X)
     visualization.plot_class_distribution(y)
-    visualization.plot_missingvalues_var(X)
-    #visualization.boxplot(X)
+
+    missing_values = [x * 100 / len(X) for x in X.isna().sum()]
+    missing_values_series = pd.Series(missing_values, index=X.columns)
+    visualization.plot_features_info(missing_values_series, operation=np.mean, xlabel='Missing values (%)',
+                                     title="Features missing values")
+
     visualization.plot_density_all(X)
     visualization.plot_all()
 

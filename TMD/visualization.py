@@ -8,8 +8,12 @@ from sklearn.preprocessing import label_binarize
 from math import ceil
 
 
-def readable_labels(labels):
-    return list(map(lambda x: x.replace('android.sensor.', ''), labels))
+def readable_labels(labels, removePrefix=True, removeSuffix=False):
+    if removePrefix:
+        labels = list(map(lambda x: x.replace('android.sensor.', ''), labels))
+    if removeSuffix:
+        labels = [label.split("#", 1)[0] for label in labels]
+    return labels
 
 
 def get_hyperparam(x, hyperparam):
@@ -21,18 +25,40 @@ def get_hyperparam(x, hyperparam):
     return result
 
 
+def group_sensor_features(series):
+    sensors = np.unique(readable_labels(series.index, removePrefix=False, removeSuffix=True))
+    data = [[series.get(sensor + "#min", 0), series.get(sensor + "#max", 0), series.get(sensor + "#mean", 0),
+             series.get(sensor + "#std", 0)] for sensor in sensors]
+    df = pd.DataFrame(data, columns=["Min", "Max", "Mean", "Std"], index=readable_labels(sensors))
+    return df
+
+
 def show_best_cv_models(best_models):
     print("\nBest models according to CV:\n")
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.width', None)
+    print([x for x in best_models])
 
     table = pd.DataFrame({'Model': best_models.columns,
-                          'Pre-processing': [pipeline.named_steps.scaler for pipeline in best_models.loc['pipeline']],
-                          'C': [get_hyperparam(x, "C") for x in best_models.loc['pipeline']],
-                          'gamma': [get_hyperparam(x, "gamma") for x in best_models.loc['pipeline']],
-                          'degree': [get_hyperparam(x, "degree") for x in best_models.loc['pipeline']],
-                          'n_estimators': [get_hyperparam(x, "n_estimators") for x in best_models.loc['pipeline']],
+                          'Pre-processing': [x.named_steps.scaler if x != "mlp" else "MinMaxScaler()"
+                                             for x in best_models.loc['pipeline']],
+                          'C': [get_hyperparam(x, "C") if x != "mlp" else "n/a"
+                                for x in best_models.loc['pipeline']],
+                          'gamma': [get_hyperparam(x, "gamma") if x != "mlp" else "n/a"
+                                    for x in best_models.loc['pipeline']],
+                          'degree': [get_hyperparam(x, "degree") if x != "mlp" else "n/a"
+                                     for x in best_models.loc['pipeline']],
+                          'n_estimators': [get_hyperparam(x, "n_estimators") if x != "mlp" else "n/a"
+                                           for x in best_models.loc['pipeline']],
+                          'hidden_size': [best_models[x].loc["hidden_size"] if best_models[x].loc['pipeline'] == "mlp"
+                                          else "n/a" for x in best_models],
+                          'epochs': [best_models[x].loc["epochs"] if best_models[x].loc['pipeline'] == "mlp"
+                                     else "n/a" for x in best_models],
+                          'batch_size': [best_models[x].loc["batch_size"] if best_models[x].loc['pipeline'] == "mlp"
+                                         else "n/a" for x in best_models],
+                          'decay': [best_models[x].loc["decay"] if best_models[x].loc['pipeline'] == "mlp"
+                                    else "n/a" for x in best_models],
                           'Fit time (s)': ["{:.2f}".format(x) for x in best_models.loc['mean_fit_time']],
                           'Train accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_train_score']],
                           'Val accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_test_score']]})
@@ -46,20 +72,29 @@ def plot_class_distribution(y):
     # count = np.sum(distribution[1])
     # [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
     fig, axs = plt.subplots(nrows=1, ncols=2)
-    axs[0].bar(x=distribution[0], height=distribution[1])
-    axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', )
+    colors = ["red", "yellow", "blue", "green", "orange"]
+    step = 1.0 / len(distribution[0])
+    colors = [hsv_to_rgb(cur, 0.9, 1) for cur in np.arange(0, 1, step)]
+    axs[0].bar(x=distribution[0], height=distribution[1], color=colors)
+    axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', colors=colors)
     fig.suptitle("Number of samples for each class")
 
 
-def plot_missingvalues_var(X):
+def plot_loss(losses, fs):
     plt.figure()
-    x = range(1, X.shape[1] + 1)
-    y = [x * 100 / len(X) for x in X.isna().sum()]
-    plt.barh(y=x, width=y)
-    plt.yticks(x, readable_labels(X.columns), size='xx-small')
-    for i, v in enumerate(y):
-        plt.text(v + 1, i + .25, str(int(v)) + "%", size='xx-small')
-    plt.title("Percentages of missing values for each feature")
+    plt.plot(losses)
+    plt.title("Loss (Dataset size: {})".format(fs))
+
+
+def plot_features_info(series, xlabel, title, operation=np.sum):
+    df = group_sensor_features(series)
+    ax = df.plot.barh()
+    pos1 = ax.get_position()
+    ax.set_position([pos1.x0 + 0.06, pos1.y0, pos1.width, pos1.height])
+    plt.xlabel(xlabel)
+    plt.yticks(np.arange(df.shape[0]), labels=["{} ({}%)".format(index, str(round(operation(df.loc[index])))) for index in df.index])
+    plt.ylabel("Sensors")
+    plt.title(title)
 
 
 def plot_density_all(X, n_measures=4):
@@ -71,14 +106,6 @@ def plot_density_all(X, n_measures=4):
         axs[int(i / n_measures), 0].set_ylabel(cols[i].split('#')[0], rotation='horizontal', ha='right')
         axs[0, i % n_measures].set_title(cols[i].split('#')[1])
     fig.suptitle("Distribution per sensor")
-
-
-def plot_explained_variance(labels, y):
-    plt.figure()
-    x = range(1, len(labels) + 1)
-    plt.barh(x, width=y)
-    plt.yticks(x, readable_labels(labels), size='xx-small')
-    plt.title("Explained variance for each variable")
 
 
 def plot_roc_for_all(models, X, y, classes, n_cols=3):
@@ -125,10 +152,11 @@ def plot_confusion_matrices(models, X, y, n_cols=3):
     fig.suptitle("Confusion Matrices per Model (Dataset Size: {})".format(X.shape[1]))
 
 
-def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
+# one plot for each set of models (which can be 'models' or 'dataset size')
+def plot_accuracies(scores_table, n_cols=3, title=""):
     n_rows = ceil(len(scores_table) / n_cols)
     fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
-    plt.subplots_adjust(wspace=0.2, hspace=0.4)
+    plt.subplots_adjust(wspace=0.2, hspace=0.5)
     for i, accuracies_table in enumerate(scores_table):
         accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
@@ -136,20 +164,33 @@ def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
             ax = axs[int(i / n_cols), i % n_cols]
         else:
             ax = axs[i % n_cols]
-        if testing:
-            bars = ax.bar(X_axis + 0.2, accuracies_table.loc['final_test_score'], 0.4, label='Test Score')
-            for bar in bars:
-                yval = bar.get_height()
-                ax.text(bar.get_x() + 0.1, yval + 0.01, str(int(yval * 100)) + "%", size='xx-small')
-        else:
-            ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
-            ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
 
+        ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
+        ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
+        for p in ax.patches:
+            ax.annotate(str(round(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
+        ax.legend(loc='lower right')
         plt.sca(ax)
+        plt.ylim(0, 1.1)
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
         ax.set_ylabel("Score")
-        ax.legend()
     fig.suptitle(title)
+
+
+def group_models(series, models_names, subsets_sizes):
+    data = [[series[model_name + fs] for fs in subsets_sizes] for model_name in models_names]
+    col = [s[1:] + " features" for s in subsets_sizes]
+    df = pd.DataFrame(data, columns=col, index=models_names)
+    return df
+
+
+# one only plot
+def plot_testing_accuracy(scores_table, models_names, subsets_sizes):
+    df = group_models(scores_table, models_names, subsets_sizes)
+    ax = df.plot.bar(rot=0)
+    for p in ax.patches:
+        ax.annotate(str(round(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
+    plt.title('Testing accuracies per Dataset')
 
 
 def plot_all():

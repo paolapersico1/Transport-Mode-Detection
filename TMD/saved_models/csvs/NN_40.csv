@@ -1,0 +1,2 @@
+,batch_size,decay,epochs,final_test_score,hidden_size,mean_fit_time,mean_test_score,mean_train_score,pipeline
+NN_40,128,0.01,100,0.9380831,64,12.0496084690094,0.9427966,0.98161244,mlp
