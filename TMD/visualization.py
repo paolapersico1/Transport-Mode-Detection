@@ -8,7 +8,7 @@ from sklearn.preprocessing import label_binarize
 from math import ceil
 
 
-def readable_labels(labels, removePrefix=True, removeSuffix= False):
+def readable_labels(labels, removePrefix=True, removeSuffix=False):
     if removePrefix:
         labels = list(map(lambda x: x.replace('android.sensor.', ''), labels))
     if removeSuffix:
@@ -30,6 +30,7 @@ def group_sensor_features(series):
              series[sensor + "#std"]] for sensor in sensors]
     df = pd.DataFrame(data, columns=["Min", "Max", "Mean", "Std"], index=readable_labels(sensors))
     return df
+
 
 def show_best_cv_models(best_models):
     print("\nBest models according to CV:\n")
@@ -145,33 +146,39 @@ def plot_confusion_matrices(models, X, y, n_cols=3):
     fig.suptitle("Confusion Matrices per Model (Dataset Size: {})".format(X.shape[1]))
 
 
-def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
+def plot_accuracies(scores_table, n_cols=3, title=""):
     n_rows = ceil(len(scores_table) / n_cols)
     fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
     plt.subplots_adjust(wspace=0.2, hspace=0.5)
     for i, accuracies_table in enumerate(scores_table):
-        accuracies_table = accuracies_table.sort_values(by=['final_test_score' if testing else 'mean_test_score'],
-                                                        ascending=False, axis=1)
+        accuracies_table = accuracies_table.sort_values(by=['mean_test_score'], ascending=False, axis=1)
         X_axis = np.arange(len(accuracies_table.columns))
         if n_rows > 1:
             ax = axs[int(i / n_cols), i % n_cols]
         else:
             ax = axs[i % n_cols]
-        if testing:
-            bars = ax.bar(X_axis + 0.2, accuracies_table.loc['final_test_score'], 0.4, label='Test Score')
-            for bar in bars:
-                yval = bar.get_height()
-                ax.text(bar.get_x() + 0.1, yval + 0.01, str(int(yval * 100)) + "%", size='xx-small')
-        else:
-            ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
-            ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
-            ax.legend()
 
+        ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
+        ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
+        ax.legend()
         plt.sca(ax)
         plt.ylim(0, 1.1)
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
         ax.set_ylabel("Score")
     fig.suptitle(title)
+
+def group_models(series, models_names, subsets_sizes):
+    data = [[series[model_name + fs] for fs in subsets_sizes] for model_name in models_names]
+    col = [s[1:] + " features" for s in subsets_sizes]
+    df = pd.DataFrame(data, columns=col, index=models_names)
+    return df
+
+def plot_testing_accuracy(scores_table, models_names, subsets_sizes):
+    df = group_models(scores_table, models_names, subsets_sizes)
+    ax = df.plot.bar()
+    for p in ax.patches:
+        ax.annotate(str(int(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
+    plt.title('Testing accuracies per Dataset')
 
 
 def plot_all():
