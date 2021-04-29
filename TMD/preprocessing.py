@@ -1,7 +1,5 @@
 import numpy as np
-from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
 
 import visualization
 import pandas as pd

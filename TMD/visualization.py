@@ -152,6 +152,7 @@ def plot_confusion_matrices(models, X, y, n_cols=3):
     fig.suptitle("Confusion Matrices per Model (Dataset Size: {})".format(X.shape[1]))
 
 
+# one plot for each set of models (which can be 'models' or 'dataset size')
 def plot_accuracies(scores_table, n_cols=3, title=""):
     n_rows = ceil(len(scores_table) / n_cols)
     fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
@@ -183,6 +184,7 @@ def group_models(series, models_names, subsets_sizes):
     return df
 
 
+# one only plot
 def plot_testing_accuracy(scores_table, models_names, subsets_sizes):
     df = group_models(scores_table, models_names, subsets_sizes)
     ax = df.plot.bar(rot=0)

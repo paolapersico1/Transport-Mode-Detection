@@ -70,7 +70,6 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             time_before = time.time()
             losses = train_loop(train_loader, model, criterion, optimizer, scheduler, num_epochs, device)
             visualization.plot_loss(losses, fs)
-            # visualization.plot_all()
 
             time_after = time.time() - time_before
 
@@ -98,7 +97,6 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
         if save_models:
             pd.DataFrame(best_model).transpose().to_csv(result_file)
             torch.save(best_nn.state_dict(), model_file)
-
     else:
         print("Saved model found: NN_{}".format(fs))
         result = pd.read_csv(result_file, index_col=0)
@@ -113,7 +111,6 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
 
             losses = train_loop(train_loader, model, criterion, optimizer, scheduler, result['epochs'][0], device)
             visualization.plot_loss(losses, fs)
-            # visualization.plot_all()
         else:
             model.load_state_dict(torch.load(model_file), strict=False)
             model.to(device)
