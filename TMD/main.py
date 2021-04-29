@@ -50,8 +50,8 @@ if __name__ == '__main__':
 
     best_models = {}
     # for each dataset subset
-    for fs, X in zip(subsets_sizes, X_subsets):
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
+    for fs, X_current in zip(subsets_sizes, X_subsets):
+        X_train, X_test, y_train, y_test = train_test_split(X_current, y, test_size=0.20, random_state=42, stratify=y)
         X_train, X_test = preprocessing.remove_nan(X_train, X_test)
 
         current_bests = model_runner.retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_models,
@@ -59,14 +59,11 @@ if __name__ == '__main__':
         current_bests = evaluation.add_test_scores(current_bests, X_test, y_test)
         best_models.update(current_bests)
         # plot roc curve and confusion matrix of each model
-        evaluation.partial_results_analysis(current_bests, X_test, y_test)
+        # evaluation.partial_results_analysis(current_bests, X_test, y_test)
 
-        # best_mlp = nn_main.run(X.to_numpy(), y_encoded, nn_models_dir, use_saved_if_available, True)
-        # best_models.update(best_mlp)
+        best_mlp = nn_main.run(X_current.to_numpy(), y_encoded, nn_models_dir, use_saved_if_available, True)
+        best_models.update(best_mlp)
 
     # display cross-validation and testing complete results
-    models_names = [est_name for est_name, _, _ in models if 'svc' not in est_name]
-    models_names.append('svc')
-    # models_names.append("NN")
-    evaluation.results_analysis(best_models, models_names, subsets_sizes)
+    evaluation.results_analysis(best_models, subsets_sizes, X.columns, models_dir)
 

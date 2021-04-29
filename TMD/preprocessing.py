@@ -4,6 +4,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
 import visualization
+import pandas as pd
 
 
 def remove_nan(X_train, X_test=None):
@@ -26,10 +27,13 @@ def pca_analysis(X):
     visualization.plot_explained_variance(most_important_names, pca.explained_variance_)
 
 def priori_analysis(X, y):
-    pca_analysis(X)
+    # pca_analysis(X)
     visualization.plot_class_distribution(y)
-    visualization.plot_missingvalues_var(X)
-    #visualization.boxplot(X)
+
+    missing_values = [x * 100 / len(X) for x in X.isna().sum()]
+    missing_values_series = pd.Series(missing_values, index=X.columns)
+    visualization.plot_features_info(missing_values_series, 'Missing values (%)', "Features missing values")
+
     visualization.plot_density_all(X)
     visualization.plot_all()
 

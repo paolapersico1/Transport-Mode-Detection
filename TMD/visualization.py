@@ -8,8 +8,12 @@ from sklearn.preprocessing import label_binarize
 from math import ceil
 
 
-def readable_labels(labels):
-    return list(map(lambda x: x.replace('android.sensor.', ''), labels))
+def readable_labels(labels, removePrefix=True, removeSuffix= False):
+    if removePrefix:
+        labels = list(map(lambda x: x.replace('android.sensor.', ''), labels))
+    if removeSuffix:
+        labels = [label.split("#", 1)[0] for label in labels]
+    return labels
 
 
 def get_hyperparam(x, hyperparam):
@@ -20,6 +24,12 @@ def get_hyperparam(x, hyperparam):
         result = "n/a"
     return result
 
+def group_sensor_features(series):
+    sensors = np.unique(readable_labels(series.index, removePrefix=False, removeSuffix=True))
+    data = [[series[sensor + "#min"], series[sensor + "#max"], series[sensor + "#mean"],
+             series[sensor + "#std"]] for sensor in sensors]
+    df = pd.DataFrame(data, columns=["Min", "Max", "Mean", "Std"], index=readable_labels(sensors))
+    return df
 
 def show_best_cv_models(best_models):
     print("\nBest models according to CV:\n")
@@ -64,16 +74,12 @@ def plot_class_distribution(y):
     axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', )
     fig.suptitle("Number of samples for each class")
 
-
-def plot_missingvalues_var(X):
-    plt.figure()
-    x = range(1, X.shape[1] + 1)
-    y = [x * 100 / len(X) for x in X.isna().sum()]
-    plt.barh(y=x, width=y)
-    plt.yticks(x, readable_labels(X.columns), size='xx-small')
-    for i, v in enumerate(y):
-        plt.text(v + 1, i + .25, str(int(v)) + "%", size='xx-small')
-    plt.title("Percentages of missing values for each feature")
+def plot_features_info(series, xlabel, title):
+    df = group_sensor_features(series)
+    df.plot.barh()
+    plt.xlabel(xlabel)
+    plt.ylabel("Sensors")
+    plt.title(title)
 
 
 def plot_density_all(X, n_measures=4):
@@ -159,12 +165,12 @@ def plot_accuracies(scores_table, n_cols=3, title="", testing=False):
         else:
             ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
             ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
+            ax.legend()
 
         plt.sca(ax)
         plt.ylim(0, 1.1)
         plt.xticks(X_axis, accuracies_table.columns, rotation=30)
         ax.set_ylabel("Score")
-        ax.legend()
     fig.suptitle(title)
 
 

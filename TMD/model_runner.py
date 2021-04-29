@@ -34,14 +34,16 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
         for attribute in attributes:
             best_models[est_name][attribute] = get_rank1_info(result, attribute)
 
-    best_svc = None
-    best_svc_acc = 0
-    for k, v in best_models.items():
-        if k.startswith('svc') and v['mean_test_score'] > best_svc_acc:
-            best_svc = best_models[k]
-            best_svc_acc = v['mean_test_score']
-    [best_models.pop(k) for k in [k for k in best_models.keys() if k.startswith('svc')]]
-    best_models.update({'svc_' + str(fs): best_svc})
+    svc_names = [k for k in best_models.keys() if k.startswith('svc')]
+    if len(svc_names):
+        best_svc = None
+        best_svc_acc = 0
+        for k, v in best_models.items():
+            if k.startswith('svc') and v['mean_test_score'] > best_svc_acc:
+                best_svc = best_models[k]
+                best_svc_acc = v['mean_test_score']
+        [best_models.pop(k) for k in svc_names]
+        best_models.update({'svc' + str(fs): best_svc})
 
     return best_models
 
