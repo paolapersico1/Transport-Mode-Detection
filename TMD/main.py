@@ -1,5 +1,4 @@
 import warnings
-import pandas as pd
 import numpy as np
 import torch
 from sklearn.preprocessing import LabelEncoder
@@ -7,11 +6,9 @@ from sklearn.model_selection import train_test_split
 from os import makedirs, path
 
 import evaluation
-import visualization
 import data_layer
 import model_runner
 import preprocessing
-from models_config import models
 
 from pytorch import nn_main
 
@@ -29,18 +26,12 @@ if __name__ == '__main__':
     set_deterministic_behavior()
 
     models_dir = 'saved_models'
-    nn_models_dir = path.join('pytorch', 'saved_models')
     use_saved_if_available, save_models = True, False
 
     if not path.exists(models_dir):
         print("WARNING: Making not existing folder: {}".format(models_dir))
         makedirs(models_dir)
         makedirs(path.join(models_dir, "csvs"))
-
-    if not path.exists(nn_models_dir):
-        print("WARNING: Making not existing folder: {}".format(nn_models_dir))
-        makedirs(nn_models_dir)
-        makedirs(path.join(nn_models_dir, "csvs"))
 
     X, y, num_classes = data_layer.load_data()
     lenc = LabelEncoder()
@@ -61,7 +52,7 @@ if __name__ == '__main__':
         # plot roc curve and confusion matrix of each model
         evaluation.partial_results_analysis(current_bests, X_test, y_test, X_current.columns)
 
-        best_mlp = nn_main.run(X_current.to_numpy(), y_encoded, nn_models_dir, use_saved_if_available, False)
+        best_mlp = nn_main.run(X_current.to_numpy(), y_encoded, models_dir, use_saved_if_available, False)
         best_models.update(best_mlp)
 
     # display cross-validation and testing complete results
