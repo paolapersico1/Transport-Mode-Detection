@@ -71,15 +71,16 @@ def plot_class_distribution(y):
     # count = np.sum(distribution[1])
     # [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
     fig, axs = plt.subplots(nrows=1, ncols=2)
-    axs[0].bar(x=distribution[0], height=distribution[1])
-    axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', )
+    colors = ["red", "yellow", "blue", "green", "orange"]
+    axs[0].bar(x=distribution[0], height=distribution[1], color=colors)
+    axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', colors=colors)
     fig.suptitle("Number of samples for each class")
 
 def plot_features_info(series, xlabel, title, operation=np.sum,):
     df = group_sensor_features(series)
     ax = df.plot.barh()
-    pos1 = ax.get_position()  # get the original position
-    ax.set_position([pos1.x0 + 0.06, pos1.y0, pos1.width, pos1.height])  # set a new position
+    pos1 = ax.get_position()
+    ax.set_position([pos1.x0 + 0.06, pos1.y0, pos1.width, pos1.height])
     plt.xlabel(xlabel)
     plt.yticks(np.arange(df.shape[0]), labels=["{} ({}%)".format(index, str(round(operation(df.loc[index])))) for index in df.index])
     plt.ylabel("Sensors")
@@ -162,8 +163,6 @@ def plot_accuracies(scores_table, n_cols=3, title=""):
             ax = axs[i % n_cols]
 
         ax.bar(X_axis - 0.2, accuracies_table.loc['mean_train_score'], 0.4, label='Train Score')
-        # for p in ax.patches:
-        #     ax.annotate(str(int(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
         ax.bar(X_axis + 0.2, accuracies_table.loc['mean_test_score'], 0.4, label='Val Score')
         for p in ax.patches:
             ax.annotate(str(round(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))

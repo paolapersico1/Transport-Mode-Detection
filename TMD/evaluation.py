@@ -14,7 +14,7 @@ def partial_results_analysis(models, X_test, y_test):
 
 def results_analysis(best_models, subsets_sizes, X_col, models_dir):
     pd_models = pd.DataFrame(best_models)
-    # visualization.show_best_cv_models(pd_models)
+    visualization.show_best_cv_models(pd_models)
 
     pipeline = load(path.join(models_dir, 'random_forest_' + str(len(X_col)) + '.joblib'))
     rankVar = pd.Series(pipeline.named_steps.clf.feature_importances_ * 100, index=X_col).sort_values(ascending=False)
