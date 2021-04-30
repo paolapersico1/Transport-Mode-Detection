@@ -7,11 +7,11 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from models_config import models
 
-
+# get the input attribute value associated to the best models
 def get_rank1_info(result, attribute):
     return result.loc[result['rank_test_score'] == 1][attribute].values[0]
 
-
+# load if available or compute and save the best models
 def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_models, models_dir):
     best_models = {}
 
@@ -20,20 +20,25 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
         file_name = est_name + ".joblib"
 
         if use_saved_if_available and path.exists(path.join(models_dir, file_name)):
+            # load the model
             print("Saved model found: {}".format(est_name))
             best_models[est_name] = {'pipeline': load(path.join(models_dir, file_name))}
             result = pd.read_csv(path.join(models_dir, "csvs", est_name + ".csv"))
         else:
+            # cross-validate
             result, current_pipeline = run_crossvalidation(X_train, y_train, est, params, cv=10)
             best_models[est_name] = {'pipeline': current_pipeline}
             if save_models:
+                # save the model and the associated info
                 dump(best_models[est_name]['pipeline'], path.join(models_dir, file_name))
                 result.to_csv(path.join(models_dir, "csvs", est_name + ".csv"))
 
+        # retrieve metadata of the best model
         attributes = ["mean_train_score", "mean_test_score", "mean_fit_time"]
         for attribute in attributes:
             best_models[est_name][attribute] = get_rank1_info(result, attribute)
 
+    #save only the SVMs with the best validation scores
     svc_names = [k for k in best_models.keys() if k.startswith('svc')]
     if len(svc_names):
         best_svc = None
@@ -47,7 +52,7 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
 
     return best_models
 
-
+# cross-validation function
 def run_crossvalidation(X_trainval, y_trainval, clf, params, cv=5, verbose=True):
     params["scaler"] = [StandardScaler(), MinMaxScaler()]
     pipeline = Pipeline([('scaler', StandardScaler()), ('clf', clf)])
