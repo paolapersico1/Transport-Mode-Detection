@@ -11,7 +11,6 @@ models = [
         SVC(kernel="linear"),
         {
             'scaler': [StandardScaler(), MinMaxScaler()],
-            #'scaler': [StandardScaler()],
             # 'clf__C': np.logspace(-3, 1, 5)
             # 'clf__C': np.logspace(-1, 3, 5)
             'clf__C': np.logspace(1, 3, 5, dtype=np.float32)
@@ -46,7 +45,6 @@ models = [
         GaussianNB(),
         {
             'scaler': [StandardScaler(), MinMaxScaler()]
-            #'scaler': [MinMaxScaler(), ]
         }
     ),
     (
@@ -54,7 +52,6 @@ models = [
         QuadraticDiscriminantAnalysis(),
         {
             'scaler': [StandardScaler(), MinMaxScaler()]
-            #'scaler': [StandardScaler(), ]
         }
     ),
     (
