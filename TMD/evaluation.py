@@ -14,7 +14,7 @@ def partial_results_analysis(models, X_test, y_test, X_cols):
     visualization.plot_all()
 
 
-def results_analysis(best_models, subsets_sizes):
+def results_analysis(best_models, subsets_sizes, losses):
     pd_models = pd.DataFrame(best_models)
     visualization.show_best_cv_models(pd_models)
 
@@ -25,7 +25,8 @@ def results_analysis(best_models, subsets_sizes):
     visualization.plot_accuracies(scores_table_per_dataset, n_cols=2, title='Validation accuracies per Dataset')
 
     visualization.plot_testing_accuracy(pd_models.transpose()['final_test_score'], models_names, subsets_sizes)
-
+    if len(losses.keys()) > 0:
+        visualization.plot_losses(losses)
     visualization.plot_all()
 
 

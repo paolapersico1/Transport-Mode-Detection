@@ -15,7 +15,7 @@ import time
 
 
 def run(X, y, nn_models_dir, use_saved_if_available, save_models):
-    force_train = True
+    force_train = False
     hidden_sizes = [64, 50, 32, 16]
     nums_epochs = [500, 400, 250, 100]
     batch_sizes = [32, 64, 128, 256]
@@ -47,7 +47,7 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
     test_subset = Subset(dataset, test_idx)
 
     best_val_score = 0
-
+    losses = None
     if not use_saved_if_available or not path.exists(model_file):
         for hidden_size, num_epochs, batch_size, gamma in hyperparams:
             print('---------------------------------------------------------------')
@@ -69,7 +69,7 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
 
             time_before = time.time()
             losses = train_loop(train_loader, model, criterion, optimizer, scheduler, num_epochs, device)
-            visualization.plot_loss(losses, fs)
+            # visualization.plot_loss(losses, fs)
 
             time_after = time.time() - time_before
 
@@ -110,10 +110,9 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
 
             losses = train_loop(train_loader, model, criterion, optimizer, scheduler, result['epochs'][0], device)
-            visualization.plot_loss(losses, fs)
+            # visualization.plot_loss(losses, fs)
         else:
             model.load_state_dict(torch.load(model_file), strict=False)
             model.to(device)
         best_model = result.transpose().to_dict()
-
-    return best_model
+    return best_model, losses

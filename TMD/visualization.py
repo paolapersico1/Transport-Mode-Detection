@@ -72,7 +72,6 @@ def plot_class_distribution(y):
     # count = np.sum(distribution[1])
     # [print(x, '{:.2f}%'.format(y / count * 100)) for x, y in zip(distribution[0], distribution[1])]
     fig, axs = plt.subplots(nrows=1, ncols=2)
-    colors = ["red", "yellow", "blue", "green", "orange"]
     step = 1.0 / len(distribution[0])
     colors = [hsv_to_rgb(cur, 0.9, 1) for cur in np.arange(0, 1, step)]
     axs[0].bar(x=distribution[0], height=distribution[1], color=colors)
@@ -84,6 +83,16 @@ def plot_loss(losses, fs):
     plt.figure()
     plt.plot(losses)
     plt.title("Loss (Dataset size: {})".format(fs))
+
+
+def plot_losses(losses):
+    plt.figure()
+    for i, (fs, loss) in enumerate(losses.items()):
+        plt.plot(loss, label='{} features'.format(fs.replace('_', '')))
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss value')
+    plt.title("Loss Progression for Dataset Size")
+    plt.legend()
 
 
 def plot_features_info(series, xlabel, title, operation=np.sum):

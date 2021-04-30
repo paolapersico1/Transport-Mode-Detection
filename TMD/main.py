@@ -40,6 +40,7 @@ if __name__ == '__main__':
     X_subsets, subsets_sizes = preprocessing.create_datasets(X)
 
     best_models = {}
+    losses = {}
     # for each dataset subset
     for fs, X_current in zip(subsets_sizes, X_subsets):
         X_train, X_test, y_train, y_test = train_test_split(X_current, y, test_size=0.20, random_state=42, stratify=y)
@@ -52,9 +53,11 @@ if __name__ == '__main__':
         # plot roc curve and confusion matrix of each model
         evaluation.partial_results_analysis(current_bests, X_test, y_test, X_current.columns)
 
-        best_mlp = nn_main.run(X_current.to_numpy(), y_encoded, models_dir, use_saved_if_available, False)
+        best_mlp, loss = nn_main.run(X_current.to_numpy(), y_encoded, models_dir, use_saved_if_available, False)
+        if loss is not None:
+            losses[fs] = loss
         best_models.update(best_mlp)
 
     # display cross-validation and testing complete results
-    evaluation.results_analysis(best_models, subsets_sizes)
+    evaluation.results_analysis(best_models, subsets_sizes, losses)
 
