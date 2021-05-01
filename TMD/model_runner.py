@@ -7,9 +7,11 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from models_config import models
 
+
 # get the input attribute value associated to the best models
 def get_rank1_info(result, attribute):
     return result.loc[result['rank_test_score'] == 1][attribute].values[0]
+
 
 # load if available or compute and save the best models
 def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_models, models_dir):
@@ -38,7 +40,7 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
         for attribute in attributes:
             best_models[est_name][attribute] = get_rank1_info(result, attribute)
 
-    #save only the SVMs with the best validation scores
+    # save only the SVMs with the best validation scores
     svc_names = [k for k in best_models.keys() if k.startswith('svc')]
     if len(svc_names):
         best_svc = None
@@ -51,6 +53,7 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
         best_models.update({'svc{}'.format(fs): best_svc})
 
     return best_models
+
 
 # cross-validation function
 def run_crossvalidation(X_trainval, y_trainval, clf, params, cv=5, verbose=True):

@@ -13,11 +13,12 @@ from torch.utils.data import DataLoader, Subset
 import itertools
 import time
 
+
 # starting point for neural network training and testing
 def run(X, y, nn_models_dir, use_saved_if_available, save_models):
     force_train = True
 
-    #hyperparameters
+    # hyperparameters
     hidden_sizes = [64, 50, 32, 16]
     nums_epochs = [500, 400, 250, 100]
     batch_sizes = [32, 64, 128, 256]
@@ -76,7 +77,7 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             model = Feedforward(dataset.X.shape[1], hidden_size, dataset.num_classes)
             model.to(device)
             criterion = torch.nn.CrossEntropyLoss()
-            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate) #stochastic gradient descent
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)  # stochastic gradient descent
             # scheduler fo learning rate decay
             lambda1 = lambda epoch: 1 / (1 + gamma * epoch)
             scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
@@ -111,7 +112,7 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
                 best_val_score = val_score
                 best_nn = model
 
-        #save on disk the best neural network
+        # save on disk the best neural network
         if save_models:
             pd.DataFrame(best_model).transpose().to_csv(result_file)
             torch.save(best_nn.state_dict(), model_file)

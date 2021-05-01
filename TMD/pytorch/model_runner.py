@@ -1,5 +1,6 @@
 import torch
 
+
 # function to train the neural network (SGD)
 def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, device):
     print('----------------------------------')
@@ -8,7 +9,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, dev
     # loop through the entire dataset for num_epochs times
     for epoch in range(num_epochs):
         print("Epoch: {}/{}".format(epoch, num_epochs))
-        #for each mini-batch
+        # for each mini-batch
         for batch, (X, y) in enumerate(dataloader):
             X, y = X.to(device), y.to(device)
             optimizer.zero_grad()
@@ -17,7 +18,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, dev
             pred = model(X)
             loss = loss_fn(pred, y)
 
-            #backpropagation step
+            # backpropagation step
             loss.backward()
             optimizer.step()
 
@@ -28,6 +29,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, dev
     print('Done')
     print('----------------------------------')
     return losses
+
 
 # function to test the neural network
 def test_loop(dataloader, model, device):

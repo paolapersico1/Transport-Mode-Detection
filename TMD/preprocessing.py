@@ -4,7 +4,8 @@ from sklearn.impute import SimpleImputer
 import visualization
 import pandas as pd
 
-#function to replace the missing values with the median computed on train set
+
+# function to replace the missing values with the median computed on train set
 def remove_nan(X_train, X_test=None):
     imputer = SimpleImputer(strategy="median").fit(X_train)
     X_train = imputer.transform(X_train)
@@ -13,19 +14,21 @@ def remove_nan(X_train, X_test=None):
 
     return X_train, X_test
 
+
 # function to show the dataset characteristics
 def priori_analysis(X, y):
     visualization.plot_class_distribution(y)
 
-    #plot the percentage of missing values for each feature
+    # plot the percentage of missing values for each feature
     missing_values = [x * 100 / len(X) for x in X.isna().sum()]
     missing_values_series = pd.Series(missing_values, index=X.columns)
     visualization.plot_features_info(missing_values_series, operation=np.mean, xlabel='Missing values (%)',
                                      title="Features missing values")
 
-    #plot the distribution function of each feature
+    # plot the distribution function of each feature
     visualization.plot_density_all(X)
     visualization.plot_all()
+
 
 # function that returns 4 different sub-datasets and their sizes-based suffix
 def create_datasets(X):

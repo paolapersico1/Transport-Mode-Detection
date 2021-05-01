@@ -1,5 +1,6 @@
 from torch import nn
 
+
 # architecture of the neural network
 class Feedforward(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
