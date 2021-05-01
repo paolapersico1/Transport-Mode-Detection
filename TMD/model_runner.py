@@ -48,7 +48,7 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
                 best_svc = best_models[k]
                 best_svc_acc = v['mean_test_score']
         [best_models.pop(k) for k in svc_names]
-        best_models.update({'svc{}'.format(fs): best_svc})
+        best_models.update({'SVM{}'.format(fs): best_svc})
 
     return best_models
 

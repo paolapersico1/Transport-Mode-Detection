@@ -9,7 +9,7 @@ def partial_results_analysis(models, X_test, y_test, X_cols):
     visualization.plot_confusion_matrices(models, X_test, y_test, n_cols=2)
 
     # display the importance of each feature based on Random Forest model
-    rf = models["random_forest_" + str(len(X_cols))]["pipeline"].named_steps.clf
+    rf = models["Random_Forest_" + str(len(X_cols))]["pipeline"].named_steps.clf
     rankVar = pd.Series(rf.feature_importances_ * 100, index=X_cols).sort_values(ascending=False)
     visualization.plot_features_info(rankVar, xlabel='Importance Score (%)',
                                      title="Features Importance (Dataset Size: {})".format(len(X_cols)))
