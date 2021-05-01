@@ -41,7 +41,7 @@ if __name__ == '__main__':
     y_encoded = lenc.fit_transform(y)
 
     # show the dataset main characteristics
-    preprocessing.priori_analysis(X, y)
+    # preprocessing.priori_analysis(X, y)
     # create 4 different sub-datasets
     X_subsets, subsets_sizes = preprocessing.create_datasets(X)
 
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         best_models.update(current_bests)
 
         # plot roc curve and confusion matrix of each best model
-        evaluation.partial_results_analysis(current_bests, X_test, y_test, X_current.columns)
+        # evaluation.partial_results_analysis(current_bests, X_test, y_test, X_current.columns)
 
         # retrieve the best neural network
         best_mlp, loss = nn_main.run(X_current.to_numpy(), y_encoded, models_dir, use_saved_if_available, save_models)

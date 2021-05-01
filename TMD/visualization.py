@@ -42,7 +42,6 @@ def show_best_cv_models(best_models):
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)
     pd.set_option('display.width', None)
-    print([x for x in best_models])
 
     table = pd.DataFrame({'Model': best_models.columns,
                           'Pre-processing': [x.named_steps.scaler if x != "mlp" else "MinMaxScaler()"
@@ -64,6 +63,7 @@ def show_best_cv_models(best_models):
                           'decay': [best_models[x].loc["decay"] if best_models[x].loc['pipeline'] == "mlp"
                                     else "n/a" for x in best_models],
                           'Fit time (s)': ["{:.2f}".format(x) for x in best_models.loc['mean_fit_time']],
+                          'Score time (s)': ["{:.2f}".format(x) for x in best_models.loc['mean_score_time']],
                           'Train accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_train_score']],
                           'Val accuracy': ["{:.2f}".format(x) for x in best_models.loc['mean_test_score']]})
     table.set_index('Model', inplace=True)

@@ -36,7 +36,7 @@ def retrieve_best_models(X_train, y_train, fs, use_saved_if_available, save_mode
                 result.to_csv(path.join(models_dir, "csvs", est_name + ".csv"))
 
         # retrieve metadata of the best model
-        attributes = ["mean_train_score", "mean_test_score", "mean_fit_time"]
+        attributes = ["mean_train_score", "mean_test_score", "mean_fit_time", "mean_score_time"]
         for attribute in attributes:
             best_models[est_name][attribute] = get_rank1_info(result, attribute)
 

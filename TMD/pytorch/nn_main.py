@@ -16,7 +16,7 @@ import time
 
 # starting point for neural network training and testing
 def run(X, y, nn_models_dir, use_saved_if_available, save_models):
-    force_train = True
+    force_train = False
 
     # hyperparameters
     hidden_sizes = [64, 50, 32, 16]
@@ -85,12 +85,14 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             # train the neural network
             time_before = time.time()
             losses = train_loop(train_loader, model, criterion, optimizer, scheduler, num_epochs, device)
-            time_after = time.time() - time_before
+            time_after_train = time.time() - time_before
             visualization.plot_loss(losses, fs)
 
             # evaluate the neural network on validation and test set
             train_score = test_loop(DataLoader(train_subset, batch_size=1, shuffle=False), model, device)
+            time_before = time.time()
             val_score = test_loop(val_loader, model, device)
+            time_after_val = time.time() - time_before
             test_score = test_loop(test_loader, model, device)
 
             print('Dataset size: {}, hidden_size: {}, num_epochs: {}, batch_size: {}, gamma: {}'.format(
@@ -107,7 +109,8 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
                                                 "decay": gamma,
                                                 "mean_train_score": train_score,
                                                 "mean_test_score": val_score,
-                                                "mean_fit_time": time_after,
+                                                "mean_fit_time": time_after_train,
+                                                "mean_score_time": time_after_val,
                                                 "final_test_score": test_score}}
                 best_val_score = val_score
                 best_nn = model
@@ -134,5 +137,6 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
         else:
             model.load_state_dict(torch.load(model_file), strict=False)
             model.to(device)
+
         best_model = result.transpose().to_dict()
     return best_model, losses
