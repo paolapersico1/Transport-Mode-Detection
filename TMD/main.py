@@ -58,14 +58,14 @@ if __name__ == '__main__':
         current_bests = evaluation.add_test_scores(current_bests, X_test, y_test)
         best_models.update(current_bests)
 
-        # plot roc curve and confusion matrix of each best model
-        evaluation.partial_results_analysis(current_bests, X_test, y_test, X_current.columns)
-
         # retrieve the best neural network
         best_mlp, loss = nn_main.run(X_current.to_numpy(), y_encoded, models_dir, use_saved_if_available, save_models)
         if loss is not None:
             losses[fs] = loss
         best_models.update(best_mlp)
+
+        # plot roc curve and confusion matrix of each best model
+        evaluation.partial_results_analysis(current_bests, X_test, y_test, X_current.columns)
 
     # display validation and testing complete results
     evaluation.results_analysis(best_models, subsets_sizes, losses)
