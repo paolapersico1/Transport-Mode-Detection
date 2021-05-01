@@ -41,21 +41,21 @@ models = [
         }
     ),
     (
-        "gaussian",
+        "Gaussian_NB",
         GaussianNB(),
         {
             'scaler': [StandardScaler(), MinMaxScaler()]
         }
     ),
     (
-        "qda",
+        "QDA",
         QuadraticDiscriminantAnalysis(),
         {
             'scaler': [StandardScaler(), MinMaxScaler()]
         }
     ),
     (
-        "random_forest",
+        "Random_Forest",
         RandomForestClassifier(random_state=42, n_jobs=8),
         {
             'scaler': [StandardScaler(), MinMaxScaler()],
