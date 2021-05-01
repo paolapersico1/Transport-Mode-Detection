@@ -11,8 +11,6 @@ models = [
         SVC(kernel="linear"),
         {
             'scaler': [StandardScaler(), MinMaxScaler()],
-            # 'clf__C': np.logspace(-3, 1, 5)
-            # 'clf__C': np.logspace(-1, 3, 5)
             'clf__C': np.logspace(1, 3, 5, dtype=np.float32)
         }
     ),
@@ -21,11 +19,7 @@ models = [
         SVC(kernel="poly"),
         {
             'scaler': [StandardScaler(), MinMaxScaler()],
-            # 'clf__C': np.logspace(-3, 1, 5),
-            # 'clf__degree': range(2, 6)
-            # 'clf__C': np.logspace(-1, 3, 5),
             'clf__C': np.logspace(1, 3, 5, dtype=np.float32),
-            # 'clf__degree': range(2, 6)
             'clf__degree': range(2, 5)
         }
     ),
@@ -34,9 +28,7 @@ models = [
         SVC(kernel="rbf"),
         {
             'scaler': [StandardScaler(), MinMaxScaler()],
-            # 'clf__C': np.logspace(-3, 1, 5),
             'clf__C': np.logspace(0, 2, 5, dtype=np.float32),
-            # 'clf__gamma': np.logspace(-3, 1, 5)
             'clf__gamma': np.logspace(-2, 2, 5, dtype=np.float32)
         }
     ),

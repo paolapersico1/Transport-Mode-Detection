@@ -25,13 +25,14 @@ def results_analysis(best_models, subsets_sizes, losses):
     # show table with cumulative validation info
     visualization.show_best_cv_models(pd_models)
 
-    # plot validation scores grouped by model type and dataset
-    scores_table_per_model = [pd_models[[col for col in pd_models if col.startswith(name)]] for name in models_names]
+    # plot validation scores grouped by dataset
     scores_table_per_dataset = [pd_models[[col for col in pd_models if col.endswith(fs)]] for fs in subsets_sizes]
     visualization.plot_accuracies(scores_table_per_dataset, n_cols=2)
 
     # plot testing score of each model
     visualization.plot_testing_accuracy(pd_models.transpose()['final_test_score'], models_names, subsets_sizes)
+
+    # plot losses if stored
     if len(losses.keys()) > 0:
         visualization.plot_losses(losses)
     visualization.plot_all()

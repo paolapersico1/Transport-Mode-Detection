@@ -20,8 +20,7 @@ def priori_analysis(X, y):
     visualization.plot_class_distribution(y)
 
     # plot the percentage of missing values for each feature
-    missing_values = [x * 100 / len(X) for x in X.isna().sum()]
-    missing_values_series = pd.Series(missing_values, index=X.columns)
+    missing_values_series = pd.Series([x / len(X) * 100 for x in X.isna().sum()], index=X.columns)
     visualization.plot_features_info(missing_values_series, operation=np.mean, xlabel='Missing values (%)',
                                      title="Features missing values")
 

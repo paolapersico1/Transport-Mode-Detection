@@ -20,20 +20,17 @@ def readable_labels(labels, removePrefix=True, removeSuffix=False):
 # function to get the hyperparameter from a model pipeline if available
 def get_hyperparam(x, hyperparam):
     model_hyperparams = x.named_steps.clf.get_params()
-    if hyperparam in model_hyperparams.keys():
-        result = model_hyperparams[hyperparam]
-    else:
-        result = "n/a"
-    return result
+    return model_hyperparams.get(hyperparam, 'n/a')
 
 
 # function to takes a sensor series as input and returns a dataframe with the stats of each sensor grouped
 def group_sensor_features(series):
     sensors = np.unique(readable_labels(series.index, removePrefix=False, removeSuffix=True))
-    data = [[series.get(sensor + "#min", 0), series.get(sensor + "#max", 0), series.get(sensor + "#mean", 0),
-             series.get(sensor + "#std", 0)] for sensor in sensors]
-    df = pd.DataFrame(data, columns=["Min", "Max", "Mean", "Std"], index=readable_labels(sensors))
-    return df
+    data = []
+    names = ['min', 'max', 'mean', 'std']
+    for sensor in sensors:
+        data.append([series.get('{}#{}'.format(sensor, statistic), 0) for statistic in names])
+    return pd.DataFrame(data, columns=[name.capitalize() for name in names], index=readable_labels(sensors))
 
 
 # function to show a summary table of the best models returned by validation
@@ -84,7 +81,7 @@ def plot_class_distribution(y):
 
 def plot_losses(losses):
     plt.figure()
-    for i, (fs, loss) in enumerate(losses.items()):
+    for fs, loss in losses.items():
         plt.plot(loss, label='{} features'.format(fs.replace('_', '')))
     plt.yscale('log')
     plt.ylabel('Loss value (log scale)')
@@ -203,8 +200,7 @@ def plot_accuracies(scores_table, n_cols=3):
 def group_models(series, models_names, subsets_sizes):
     data = [[series[model_name + fs] for fs in subsets_sizes] for model_name in models_names]
     col = [s[1:] + " features" for s in subsets_sizes]
-    df = pd.DataFrame(data, columns=col, index=models_names)
-    return df
+    return pd.DataFrame(data, columns=col, index=models_names)
 
 
 # function to display one only plot with testing scores

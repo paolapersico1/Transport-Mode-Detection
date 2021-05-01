@@ -133,7 +133,6 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
 
             losses = train_loop(train_loader, model, criterion, optimizer, scheduler, result['epochs'][0], device)
-            # visualization.plot_loss(losses, fs)
         else:
             model.load_state_dict(torch.load(model_file), strict=False)
             model.to(device)

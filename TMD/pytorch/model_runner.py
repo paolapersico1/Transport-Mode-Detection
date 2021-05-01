@@ -10,7 +10,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, scheduler, num_epochs, dev
     for epoch in range(num_epochs):
         print("Epoch: {}/{}".format(epoch, num_epochs))
         # for each mini-batch
-        for batch, (X, y) in enumerate(dataloader):
+        for X, y in dataloader:
             X, y = X.to(device), y.to(device)
             optimizer.zero_grad()
 
