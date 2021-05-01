@@ -7,6 +7,7 @@ from sklearn.metrics import plot_confusion_matrix, roc_curve, auc
 from sklearn.preprocessing import label_binarize
 from math import ceil
 
+
 # function to make the sensor labels more readable
 def readable_labels(labels, removePrefix=True, removeSuffix=False):
     if removePrefix:
@@ -14,6 +15,7 @@ def readable_labels(labels, removePrefix=True, removeSuffix=False):
     if removeSuffix:
         labels = [label.split("#", 1)[0] for label in labels]
     return labels
+
 
 # function to get the hyperparameter from a model pipeline if available
 def get_hyperparam(x, hyperparam):
@@ -24,6 +26,7 @@ def get_hyperparam(x, hyperparam):
         result = "n/a"
     return result
 
+
 # function to takes a sensor series as input and returns a dataframe with the stats of each sensor grouped
 def group_sensor_features(series):
     sensors = np.unique(readable_labels(series.index, removePrefix=False, removeSuffix=True))
@@ -31,6 +34,7 @@ def group_sensor_features(series):
              series.get(sensor + "#std", 0)] for sensor in sensors]
     df = pd.DataFrame(data, columns=["Min", "Max", "Mean", "Std"], index=readable_labels(sensors))
     return df
+
 
 # function to show a summary table of the best models returned by validation
 def show_best_cv_models(best_models):
@@ -66,7 +70,8 @@ def show_best_cv_models(best_models):
     table.sort_values(by=['Val accuracy'], inplace=True, ascending=False)
     print(table)
 
-#function to plot the targets distribution
+
+# function to plot the targets distribution
 def plot_class_distribution(y):
     distribution = np.unique(y, return_counts=True)
     fig, axs = plt.subplots(nrows=1, ncols=2)
@@ -76,20 +81,15 @@ def plot_class_distribution(y):
     axs[1].pie(distribution[1], labels=distribution[0], autopct='%.2f%%', colors=colors)
     fig.suptitle("Number of samples for each class")
 
-# function to plot the loss progress for neural network training
-def plot_loss(losses, fs):
-    plt.figure()
-    plt.plot(losses)
-    plt.title("Loss (Dataset size: {})".format(fs))
-
 
 def plot_losses(losses):
     plt.figure()
     for i, (fs, loss) in enumerate(losses.items()):
         plt.plot(loss, label='{} features'.format(fs.replace('_', '')))
+    plt.yscale('log')
+    plt.ylabel('Loss value (log scale)')
     plt.xlabel('Epoch')
-    plt.ylabel('Loss value')
-    plt.title("Loss Progression for Dataset Size")
+    plt.title("Loss Progression for Dataset")
     plt.legend()
 
 
@@ -100,9 +100,11 @@ def plot_features_info(series, xlabel, title, operation=np.sum):
     pos1 = ax.get_position()
     ax.set_position([pos1.x0 + 0.06, pos1.y0, pos1.width, pos1.height])
     plt.xlabel(xlabel)
-    plt.yticks(np.arange(df.shape[0]), labels=["{} ({}%)".format(index, str(round(operation(df.loc[index])))) for index in df.index])
+    plt.yticks(np.arange(df.shape[0]),
+               labels=["{} ({}%)".format(index, str(round(operation(df.loc[index])))) for index in df.index])
     plt.ylabel("Sensors")
     plt.title(title)
+
 
 # function to plot the distribution of each sensor feature
 def plot_density_all(X, n_measures=4):
@@ -114,6 +116,7 @@ def plot_density_all(X, n_measures=4):
         axs[int(i / n_measures), 0].set_ylabel(cols[i].split('#')[0], rotation='horizontal', ha='right')
         axs[0, i % n_measures].set_title(cols[i].split('#')[1])
     fig.suptitle("Distribution per sensor")
+
 
 # function to plot the roc curve of each model
 def plot_roc_for_all(models, X, y, classes, n_cols=3):
@@ -131,9 +134,9 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
         fpr = {}
         tpr = {}
         roc_auc = {}
-        #for each class
+        # for each class
         for i in range(n_classes):
-            #false positive rate and true positive rate
+            # false positive rate and true positive rate
             fpr[i], tpr[i], _ = roc_curve(one_hot_encoded_y[:, i], one_hot_encoded_preds[:, i])
             # area under curve
             roc_auc[i] = auc(fpr[i], tpr[i])
@@ -146,9 +149,10 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
             # line for comparison purposes
             ax.plot([0, 1], [0, 1], 'k--', lw=lw)
             ax.set(xlim=[0.0, 1.0], ylim=[0.0, 1.05], xlabel='False Positive Rate', ylabel='True Positive Rate',
-                   title=name)
+                   title=' '.join(name.split('_')[:-1]))
             ax.legend(loc="lower right")
-    fig.suptitle("ROC Curves per Model (Dataset Size: {})".format(X.shape[1]))
+    fig.suptitle("ROC Curves per Model (Features Count: {})".format(X.shape[1]))
+
 
 # function to plot the confusion matrices of each model
 def plot_confusion_matrices(models, X, y, n_cols=3):
@@ -161,12 +165,12 @@ def plot_confusion_matrices(models, X, y, n_cols=3):
         else:
             ax = axs[i % n_cols]
         plot_confusion_matrix(model['pipeline'], X, y, ax=ax)
-        ax.set_title(name)
-    fig.suptitle("Confusion Matrices per Model (Dataset Size: {})".format(X.shape[1]))
+        ax.set_title(' '.join(name.split('_')[:-1]))
+    fig.suptitle("Confusion Matrices per Model (Features Count: {})".format(X.shape[1]))
 
 
-# one plot for each set of models (which can be 'models' or 'dataset size')
-def plot_accuracies(scores_table, n_cols=3, title=""):
+# one plot for each set of models (grouped by 'dataset size')
+def plot_accuracies(scores_table, n_cols=3):
     n_rows = ceil(len(scores_table) / n_cols)
     fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols)
     plt.subplots_adjust(wspace=0.2, hspace=0.5)
@@ -189,9 +193,11 @@ def plot_accuracies(scores_table, n_cols=3, title=""):
         ax.legend(loc='lower right')
         plt.sca(ax)
         plt.ylim(0, 1.1)
-        plt.xticks(X_axis, accuracies_table.columns, rotation=30)
+        plt.xticks(X_axis, [' '.join(x.split('_')[:-1]) for x in accuracies_table.columns], rotation=30)
         ax.set_ylabel("Score")
-    fig.suptitle(title)
+        ax.set_title('Features Count: {}'.format(accuracies_table.columns[0].split('_')[-1]))
+    fig.suptitle('Validation accuracies per Dataset')
+
 
 # function that takes a series with the models as input and returns a dataframe with models grouped by dataset size
 def group_models(series, models_names, subsets_sizes):
@@ -205,9 +211,11 @@ def group_models(series, models_names, subsets_sizes):
 def plot_testing_accuracy(scores_table, models_names, subsets_sizes):
     df = group_models(scores_table, models_names, subsets_sizes)
     ax = df.plot.bar(rot=0)
+    plt.xticks(range(len(models_names)), [x.replace('_', ' ') for x in models_names])
     for p in ax.patches:
         ax.annotate(str(round(p.get_height() * 100)) + "%", (p.get_x() * 1.005, p.get_height() * 1.005))
     plt.title('Testing accuracies per Dataset')
+
 
 # function to show all the plots in the buffer
 def plot_all():
