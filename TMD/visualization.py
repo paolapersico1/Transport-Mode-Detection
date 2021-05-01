@@ -9,10 +9,10 @@ from math import ceil
 
 
 # function to make the sensor labels more readable
-def readable_labels(labels, removePrefix=True, removeSuffix=False):
-    if removePrefix:
+def readable_labels(labels, remove_prefix=True, remove_suffix=False):
+    if remove_prefix:
         labels = list(map(lambda x: x.replace('android.sensor.', ''), labels))
-    if removeSuffix:
+    if remove_suffix:
         labels = [label.split("#", 1)[0] for label in labels]
     return labels
 
@@ -25,7 +25,7 @@ def get_hyperparam(x, hyperparam):
 
 # function to takes a sensor series as input and returns a dataframe with the stats of each sensor grouped
 def group_sensor_features(series):
-    sensors = np.unique(readable_labels(series.index, removePrefix=False, removeSuffix=True))
+    sensors = np.unique(readable_labels(series.index, remove_prefix=False, remove_suffix=True))
     data = []
     names = ['min', 'max', 'mean', 'std']
     for sensor in sensors:

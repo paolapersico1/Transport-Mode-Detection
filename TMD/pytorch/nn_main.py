@@ -86,7 +86,6 @@ def run(X, y, nn_models_dir, use_saved_if_available, save_models):
             time_before = time.time()
             losses = train_loop(train_loader, model, criterion, optimizer, scheduler, num_epochs, device)
             time_after_train = time.time() - time_before
-            visualization.plot_loss(losses, fs)
 
             # evaluate the neural network on validation and test set
             train_score = test_loop(DataLoader(train_subset, batch_size=1, shuffle=False), model, device)
