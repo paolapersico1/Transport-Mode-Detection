@@ -4,7 +4,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from os import path
 import preprocessing
-import visualization
 from pytorch.model_runner import train_loop, test_loop
 import torch
 from pytorch.model import Feedforward

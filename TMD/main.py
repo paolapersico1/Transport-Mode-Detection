@@ -39,7 +39,7 @@ if __name__ == '__main__':
     y_encoded = lenc.fit_transform(y)
 
     # show the dataset main characteristics
-    preprocessing.priori_analysis(X, y)
+    # preprocessing.priori_analysis(X, y)
     # create 4 different sub-datasets
     X_subsets, subsets_sizes = preprocessing.create_datasets(X)
 

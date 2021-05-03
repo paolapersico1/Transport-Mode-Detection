@@ -4,7 +4,7 @@ import numpy as np
 import seaborn as sbn
 import pandas as pd
 from sklearn.metrics import plot_confusion_matrix, roc_curve, auc
-from sklearn.preprocessing import label_binarize
+from sklearn.preprocessing import label_binarize, LabelEncoder
 from math import ceil
 
 
@@ -127,12 +127,16 @@ def plot_roc_for_all(models, X, y, classes, n_cols=3):
     plt.subplots_adjust(wspace=0.4, hspace=0.3)
     for j, (name, model) in enumerate(models.items()):
         # one-hot encoded predictions
-        one_hot_encoded_preds = label_binarize(model['pipeline'].predict(X), classes=classes)
+        # one_hot_encoded_preds = label_binarize(model['pipeline'].predict(X), classes=classes)
+        # print(model['pipeline'])
+        one_hot_encoded_preds = model['pipeline'].predict_proba(X)
         fpr = {}
         tpr = {}
+        # t = {}
         roc_auc = {}
         # for each class
         for i in range(n_classes):
+            print(one_hot_encoded_preds[:, i])
             # false positive rate and true positive rate
             fpr[i], tpr[i], _ = roc_curve(one_hot_encoded_y[:, i], one_hot_encoded_preds[:, i])
             # area under curve

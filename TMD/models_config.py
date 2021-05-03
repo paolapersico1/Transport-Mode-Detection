@@ -6,32 +6,32 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.svm import SVC
 
 models = [
-    (
-        "svc_linear",
-        SVC(kernel="linear"),
-        {
-            'scaler': [StandardScaler(), MinMaxScaler()],
-            'clf__C': np.logspace(1, 3, 5, dtype=np.float32)
-        }
-    ),
-    (
-        "svc_poly",
-        SVC(kernel="poly"),
-        {
-            'scaler': [StandardScaler(), MinMaxScaler()],
-            'clf__C': np.logspace(1, 3, 5, dtype=np.float32),
-            'clf__degree': range(2, 5)
-        }
-    ),
-    (
-        "svc_rbf",
-        SVC(kernel="rbf"),
-        {
-            'scaler': [StandardScaler(), MinMaxScaler()],
-            'clf__C': np.logspace(0, 2, 5, dtype=np.float32),
-            'clf__gamma': np.logspace(-2, 2, 5, dtype=np.float32)
-        }
-    ),
+   (
+       "svc_linear",
+       SVC(kernel="linear",probability=True),
+       {
+           'scaler': [StandardScaler(), MinMaxScaler()],
+           'clf__C': np.logspace(1, 3, 5, dtype=np.float32)
+       }
+   ),
+   (
+       "svc_poly",
+       SVC(kernel="poly",probability=True),
+       {
+           'scaler': [StandardScaler(), MinMaxScaler()],
+           'clf__C': np.logspace(1, 3, 5, dtype=np.float32),
+           'clf__degree': range(2, 5)
+       }
+   ),
+   (
+       "svc_rbf",
+       SVC(kernel="rbf",probability=True),
+       {
+           'scaler': [StandardScaler(), MinMaxScaler()],
+           'clf__C': np.logspace(0, 2, 5, dtype=np.float32),
+           'clf__gamma': np.logspace(-2, 2, 5, dtype=np.float32)
+       }
+   ),
     (
         "Gaussian_NB",
         GaussianNB(),
